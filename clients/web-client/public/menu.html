@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Menú Principal - Veterinaria</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #e8f5e9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      text-align: center;
+      color: #388e3c;
+      margin-top: 20px;
+      font-size: 2.5em;
+    }
+    .menu-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 90%;
+      max-width: 400px;
+      margin: 20px auto;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+    .menu-container:hover {
+      transform: scale(1.02);
+    }
+    .menu-button {
+      display: block;
+      background-color: #66bb6a;
+      color: white;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.3s, transform 0.2s;
+      font-size: 1.2em;
+    }
+    .menu-button:hover {
+      background-color: #4caf50;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Menú Principal</h1>
+
+  <div class="menu-container">
+    <a href="register-pet.html" class="menu-button">Registrar Mascota</a>
+    <a href="appointment.html" class="menu-button">Agendar Cita</a>
+    <a href="#" onclick="logout()" class="menu-button">Cerrar Sesión</a>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2025 Veterinaria. Todos los derechos reservados.</p>
+  </div>
+
+  <script>
+    window.onload = function() {
+      const role = localStorage.getItem('role');
+      if (!role) {
+        // Si no está logueado, volver al login
+        window.location.href = 'login.html';
+      }
+
+      // Si es doctor, ocultar 'Agendar Cita'
+      if (role === 'doctor') {
+        document.querySelector('a[href="appointment.html"]').style.display = 'none';
+      }
+
+      // Mostrar el rol actual en el footer
+      const footer = document.querySelector('.footer');
+      footer.innerHTML += `<p>Rol actual: ${role}</p>`;
+    };
+
+    function logout() {
+      const confirmLogout = confirm("¿Estás seguro que deseas cerrar sesión?");
+      if (confirmLogout) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('role');
+        window.location.href = 'login.html';
+      }
+    }
+  </script>
+
+</body>
+</html>

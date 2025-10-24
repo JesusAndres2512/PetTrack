@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  pets-service:
+    build: ./services/pets-service
+    image: pettrackregistry.azurecr.io/veterinary-app-pets-service:latest
+    container_name: pets_service
+    ports:
+      - "8003:8000"
+    env_file:
+      - ./services/pets-service/.env
+  #  depends_on:
+   #   db:
+    #    condition: service_healthy
+    volumes:
+      - ./services/pets-service/app:/app/app
+
+  api-gateway:
+    build: ./services/api-gateway
+    image: pettrackregistry.azurecr.io/veterinary-app-api-gateway:latest
+    container_name: api_gateway
+    ports:
+      - "8002:8002"
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - APPOINTMENTS_SERVICE_URL=http://appointments-service:8000
+      - PETS_SERVICE_URL=http://pets-service:8000
+    depends_on:
+      - auth-service
+      - appointments-service
+      - pets-service
+
+  auth-service:
+    build: ./services/auth-service
+    image: pettrackregistry.azurecr.io/veterinary-app-auth-service:latest
+    container_name: auth_service
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./services/auth-service/.env
+    #depends_on:
+     # db:
+      #  condition: service_healthy
+    volumes:
+      - ./services/auth-service:/app
+
+  appointments-service:
+    build: ./services/appointments-service
+    image: pettrackregistry.azurecr.io/veterinary-app-appointments-service:latest
+    container_name: appointments_service
+    ports:
+      - "8001:8000"
+    env_file:
+      - ./services/appointments-service/.env
+    #depends_on:
+     # db:
+      #  condition: service_healthy
+    volumes:
+      - ./services/appointments-service:/app
+      - /app/node_modules
+
+  web-client:
+    build: ./clients/web-client
+    image: pettrackregistry.azurecr.io/veterinary-app-web-client:latest
+    container_name: web_client
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      - appointments-service
+      - pets-service
+    volumes:
+      - ./clients/web-client:/app
+
+volumes:
+  vet_db_data:
