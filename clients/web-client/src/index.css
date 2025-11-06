@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #a8e6cf;
+  --color-secondary: #dcedc1;
+  --color-accent: #ffd3b6;
+  --color-text: #2e4a3b;
+  --color-background: #f7fff7;
+  --color-shadow: rgba(46, 74, 59, 0.1);
+}
+
+body {
+  @apply bg-[var(--color-background)] text-[var(--color-text)] font-sans;
+  font-family: 'Poppins', sans-serif;
+}
+
+h1, h2, h3 {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+button {
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 5px var(--color-shadow);
+  transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+  background-color: var(--color-secondary);
+  transform: translateY(-1px);
+}
+
+.card {
+  background-color: var(--color-secondary);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 8px var(--color-shadow);
+}
+
+input, select, textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
