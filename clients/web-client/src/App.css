@@ -1,0 +1,30 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--color-background);
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+  filter: drop-shadow(0 0 2em var(--color-primary));
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em var(--color-accent));
+}
+
+.card {
+  background-color: var(--color-secondary);
+  border-radius: 12px;
+  padding: 2em;
+  box-shadow: 0 4px 6px var(--color-shadow);
+}
+
+.read-the-docs {
+  color: #4b5563;
+}

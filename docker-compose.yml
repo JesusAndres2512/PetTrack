@@ -13,6 +13,8 @@ services:
       - ./services/auth-service:/app
       - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
     restart: always
+    networks:
+      - backend
 
   # === PETS SERVICE ===
   pets-service:
@@ -26,6 +28,8 @@ services:
       - ./services/pets-service:/app
       - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
     restart: always
+    networks:
+      - backend
 
   # === APPOINTMENTS SERVICE ===
   appointment-service:
@@ -39,8 +43,10 @@ services:
       - ./services/appointment-service:/app
       - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
     restart: always
+    networks:
+      - backend
 
-  # === API GATEWAY (FastAPI) ===
+  # === API GATEWAY ===
   api-gateway:
     build: ./services/api-gateway
     container_name: api_gateway
@@ -50,26 +56,36 @@ services:
       - ./services/api-gateway/.env
     environment:
       AUTH_SERVICE_URL: "http://auth-service:8000"
-      PETS_SERVICE_URL: "http://pets-service:8000"
-      APPOINTMENTS_SERVICE_URL: "http://appointment-service:8000"
+      PETS_SERVICE_URL: "http://pets-service:8001"
+      APPOINTMENTS_SERVICE_URL: "http://appointment-service:8002"
     depends_on:
       - auth-service
       - pets-service
       - appointment-service
     restart: always
+    networks:
+      - backend
 
-  # === WEB CLIENT (REACT / VITE) ===
+  # === WEB CLIENT (React con Nginx) ===
   client:
-    build: ./client-react
+    build: ./clients/web-client
     container_name: web_client
     ports:
-      - "5173:8080"
+      - "80:80"   # ✅ producción estable
     depends_on:
       - api-gateway
     environment:
-      VITE_API_URL: "http://api-gateway:8003"
+      VITE_API_GATEWAY: "http://api-gateway:8003"
     restart: always
+    networks:
+      - backend
 
+# === NETWORKS ===
+networks:
+  backend:
+    driver: bridge
+
+# === VOLUMES ===
 volumes:
   auth_data:
   pets_data:
