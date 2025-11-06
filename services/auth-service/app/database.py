@@ -1,25 +1,30 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
+from .config import settings
+import logging
 
-DB_HOST = os.getenv("DB_HOST", "pettrack-mysql.mysql.database.azure.com")
-DB_NAME = os.getenv("DB_NAME", "auth_db")  # cambia por cada microservicio
-DB_USER = os.getenv("DB_USER", "adminpet")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "PetTrack2025")
-SSL_CA = os.path.join(os.path.dirname(__file__), "../DigiCertGlobalRootG2.pem")
+# Configuración de logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
-DATABASE_URL = (
-    f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:3306/{DB_NAME}"
-    f"?ssl_ca={SSL_CA}&ssl_verify_cert=true"
+# Configuración de la base de datos
+engine = create_engine(
+    settings.DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    pool_size=10,
+    max_overflow=20
 )
 
-engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 Base = declarative_base()
 
-
 def get_db():
+    """
+    Proveedor de dependencia para obtener sesiones de base de datos.
+    """
     db = SessionLocal()
     try:
         yield db

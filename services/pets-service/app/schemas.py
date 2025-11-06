@@ -1,12 +1,23 @@
 from pydantic import BaseModel
+from datetime import date
 
 class PetBase(BaseModel):
     name: str
     species: str
     breed: str
+    birth_date: date
     owner_name: str
 
-class PetResponse(PetBase):
+class PetCreate(PetBase):
+    pass
+
+class PetOut(PetBase):
     id: int
-    class Config:
-        orm_mode = True
+    name: str
+    species: str
+    breed: str
+    birth_date: date
+    owner_name: str
+
+class Config:
+    orm_mode = True

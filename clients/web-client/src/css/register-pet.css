@@ -1,0 +1,38 @@
+/* register-pet.css */
+ body {
+            font-family: Arial, sans-serif;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .form-container {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        input, label, button {
+            display: block;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        input {
+            padding: 0.5rem;
+            border: 1px solid #a5d6a7;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #66bb6a;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #4caf50;
+        }

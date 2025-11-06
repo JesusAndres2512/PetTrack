@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PetTrack — Seguimiento Post-Consulta & Recompensas</title>
+    <link rel="stylesheet" href="../src/css/postconsulta-recompensas.css" />
+  </head>
+  <body>
+    <div class="app" role="application" aria-label="PetTrack seguimiento y recompensas">
+      <header>
+        <div class="logo" aria-hidden="true">PT</div>
+        <div>
+          <h1>PetTrack — Seguimiento Post-Consulta & Recompensas</h1>
+          <p>Automatiza el seguimiento posterior y fideliza a tus clientes con puntos y premios.</p>
+        </div>
+      </header>
+
+      <!-- LEFT: Seguimiento Post-Consulta -->
+      <main class="card seguimiento" aria-labelledby="seguimientoTitle">
+        <h2 id="seguimientoTitle">Seguimiento Post-Consulta</h2>
+
+        <div class="controls" role="search">
+          <input id="search" type="search" placeholder="Buscar por mascota, dueño o estado..." aria-label="Buscar seguimientos" />
+          <button class="btn small" id="nuevoBtn">+ Nuevo seguimiento</button>
+          <button class="btn secondary small" id="filtrarBtn">Filtrar</button>
+        </div>
+
+        <!-- Form (hidden toggled) -->
+        <form id="followForm" class="card" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong>Crear seguimiento</strong>
+            <button type="button" class="btn secondary small" id="cancelForm">Cancelar</button>
+          </div>
+          <div class="follow-form">
+            <div>
+              <label for="petName">Mascota / Dueño</label>
+              <input id="petName" placeholder="Ej: Rocky — Ana Pérez" required />
+              <label for="type" style="margin-top:8px;display:block">Tipo</label>
+              <select id="type">
+                <option>Control / Revisión</option>
+                <option>Vacunación programada</option>
+                <option>Seguimiento de recuperación</option>
+                <option>Encuesta de satisfacción</option>
+              </select>
+              <label for="notes" style="margin-top:8px;display:block">Notas</label>
+              <textarea id="notes" placeholder="Breve recordatorio o instrucciones"></textarea>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <label for="date">Fecha</label>
+              <input id="date" type="date" />
+              <label for="time">Hora</label>
+              <input id="time" type="time" />
+              <label for="notify">Notificar</label>
+              <select id="notify">
+                <option>Push</option>
+                <option>Correo</option>
+                <option>SMS</option>
+              </select>
+              <button type="button" class="btn" id="saveFollow">Crear</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Lista de seguimientos -->
+        <section aria-live="polite">
+          <div class="follow-list" id="followList"></div>
+        </section>
+
+        <!-- Encuesta modal -->
+        <div id="surveyModal" class="card" style="display:none;margin-top:8px">
+          <strong>Encuesta rápida</strong>
+          <div class="survey" role="form">
+            <div class="q">
+              <span>¿Cómo calificaría la atención?</span>
+              <div class="stars" id="stars">
+                <div class="star" data-val="1">1</div>
+                <div class="star" data-val="2">2</div>
+                <div class="star" data-val="3">3</div>
+                <div class="star" data-val="4">4</div>
+                <div class="star" data-val="5">5</div>
+              </div>
+            </div>
+            <textarea id="feedback" placeholder="Comentarios (opcional)"></textarea>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn secondary" id="closeSurvey">Cerrar</button>
+              <button class="btn" id="submitSurvey">Enviar</button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT: Recompensas -->
+      <aside class="card rewards" aria-labelledby="rewardsTitle">
+        <h2 id="rewardsTitle">Fidelización y Recompensas</h2>
+        <p class="muted">Puntos acumulados y catálogo de premios</p>
+
+        <div class="balance" style="margin-top:8px">
+          <div class="coin" aria-hidden="true">P</div>
+          <div>
+            <div style="font-size:13px;color:var(--muted)">Saldo de puntos</div>
+            <div style="font-size:22px;font-weight:800">1,460 <span style="font-size:13px;color:var(--muted);font-weight:600">pts</span></div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <div class="filter-row">
+            <div class="chip">Todos</div>
+            <div class="chip">Por canjear</div>
+          </div>
+          <button class="btn small" id="histBtn">Historial</button>
+        </div>
+
+        <div class="reward-list" id="rewardList"></div>
+
+        <div style="margin-top:12px">
+          <strong>Cómo ganar puntos</strong>
+          <ul style="margin:8px 0 0 18px;color:var(--muted);font-size:13px">
+            <li>100 pts — Cita completada</li>
+            <li>30 pts — Encuesta enviada</li>
+            <li>50 pts — Referir a un amigo</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+    <script src="../js/postconsulta-recompensas.js"></script>
+  </body>
+</html>

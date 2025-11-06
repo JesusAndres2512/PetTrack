@@ -1,81 +1,74 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
-import jwt
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy.orm import sessionmaker, Session
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine
+from app.models import User  # Aquí importas tu modelo real
+from app.schemas import UserCreate, UserLogin, Token
+from app.auth import create_access_token
+from passlib.hash import bcrypt
+from sqlalchemy import text
+from app.database import engine  # ajusta si es necesario
+from typing import List
+from app.schemas import UserOut  # Lo crearemos a continuación
+import os
 
-from . import models, schemas
-from .database import Base, engine, get_db
-from .config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+# ------------------ Configuración ------------------
+DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://user:password@db:3306/vet_auth")
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Auth Service")
+# ------------------ App Init ------------------
+app = FastAPI()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+# ------------------ CORS Middleware (¡Agregado correctamente!) ------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],            # Permite todos los orígenes
+    allow_credentials=True,
+    allow_methods=["*"],            # Permite todos los métodos (incluye OPTIONS)
+    allow_headers=["*"],            # Permite todos los headers (incluye Content-Type)
+)
 
-
-def get_user_from_token(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+# ------------------ Base de datos ------------------
+def get_db():
+    db = SessionLocal()
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        user = db.query(models.User).filter(models.User.email == email).first()
-        if not user:
-            raise HTTPException(status_code=401, detail="Token inválido")
-        return user
-    except:
-        raise HTTPException(status_code=401, detail="Token inválido")
+        yield db
+    finally:
+        db.close()
 
-@app.get("/users")
-def list_users(db: Session = Depends(get_db)):
-    return db.query(models.User).all()
+# ------------------ Endpoints ------------------
+
+
+@app.get("/users", response_model=List[UserOut])
+def get_users(db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    return users
 
 @app.post("/register")
-def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    exists = db.query(models.User).filter(models.User.email == user.email).first()
-    if exists:
-        raise HTTPException(status_code=400, detail="El email ya está en uso")
+def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.email == user.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="El usuario ya existe")
 
-    hashed_pw = pwd_context.hash(user.password)
-    new_user = models.User(
-        name=user.name,
+    new_user = User(
         email=user.email,
-        role=user.role,
-        hashed_password=hashed_pw
+        hashed_password=bcrypt.hash(user.password),
+        full_name=user.full_name,
+        role=user.role  # Usa el rol de schemas.py
     )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return {"message": "Usuario registrado con éxito"}
+    return {"message": "Usuario registrado", "user_id": new_user.id}
 
-
-@app.post("/login")
-def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == credentials.email).first()
-
-    if not user or not pwd_context.verify(credentials.password, user.hashed_password):
+@app.post("/login", response_model=Token)
+def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == credentials.email).first()
+    if not user or not bcrypt.verify(credentials.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
-    token = jwt.encode({
-        "sub": user.email,
-        "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    }, SECRET_KEY, algorithm=ALGORITHM)
-
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user_id": user.id,
-        "email": user.email,
-        "role": user.role
-    }
-
-
-@app.get("/profile")
-def me(user=Depends(get_user_from_token)):
-    return {
-        "id": user.id,
-        "name": user.name,
-        "email": user.email,
-        "role": user.role,
-    }
+    access_token = create_access_token(
+        data={"sub": user.email, "role": user.role.value}
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
