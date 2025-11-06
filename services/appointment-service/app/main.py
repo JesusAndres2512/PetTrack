@@ -7,10 +7,9 @@ import requests
 import os
 
 Base.metadata.create_all(bind=engine)
-app = FastAPI(title="Pets Service")
+app = FastAPI(title="Appointments Service")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8000")
 
 
@@ -21,15 +20,15 @@ def get_user(token: str = Depends(oauth2_scheme)):
     return r.json()
 
 
-@app.post("/pets", response_model=schemas.PetResponse)
-def create_pet(pet: schemas.PetBase, user=Depends(get_user), db: Session = Depends(get_db)):
-    new_pet = models.Pet(**pet.dict(), owner_id=user["id"])
-    db.add(new_pet)
+@app.post("/appointments", response_model=schemas.AppointmentResponse)
+def create_appointment(appo: schemas.AppointmentBase, user=Depends(get_user), db: Session = Depends(get_db)):
+    new_appo = models.Appointment(**appo.dict(), owner_id=user["id"])
+    db.add(new_appo)
     db.commit()
-    db.refresh(new_pet)
-    return new_pet
+    db.refresh(new_appo)
+    return new_appo
 
 
-@app.get("/pets", response_model=list[schemas.PetResponse])
-def list_pets(user=Depends(get_user), db: Session = Depends(get_db)):
-    return db.query(models.Pet).filter(models.Pet.owner_id == user["id"]).all()
+@app.get("/appointments", response_model=list[schemas.AppointmentResponse])
+def list_appointments(user=Depends(get_user), db: Session = Depends(get_db)):
+    return db.query(models.Appointment).filter(models.Appointment.owner_id == user["id"]).all()
