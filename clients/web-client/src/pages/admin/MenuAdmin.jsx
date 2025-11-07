@@ -4,9 +4,9 @@ import MainMenu from "../../components/MainMenu.jsx";
 
 export default function MenuAdmin() {
   const items = [
-    { to: "/admin/dashboard", label: "Dashboard General" },
-    { to: "/admin/usuarios", label: "Usuarios" },
-    { to: "/admin/doctores", label: "Doctores" },
+    { to: "/admin/DashboardAdmin", label: "Dashboard General" },
+    { to: "/ViewUsers", label: "Usuarios" },
+    { to: "/viewDoctors", label: "Doctores" },
     { to: "/admin/clientes", label: "Clientes" },
     { to: "/admin/reportes", label: "Reportes" },
   ];

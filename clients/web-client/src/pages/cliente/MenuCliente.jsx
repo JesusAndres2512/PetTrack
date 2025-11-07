@@ -4,10 +4,10 @@ import MainMenu from "../../components/MainMenu.jsx";
 
 export default function MenuCliente() {
   const items = [
-    { to: "/cliente/mascotas", label: "Mis Mascotas" },
-    { to: "/cliente/citas", label: "Reservar Cita" },
+    { to: "/cliente/MascotasView", label: "Mis Mascotas" },
+    { to: "/cliente/CitasClienteView", label: "Reservar Cita" },
     { to: "/cliente/historial", label: "Historial de Citas" },
-    { to: "/cliente/dashboard", label: "Mi Perfil" },
+    { to: "/cliente/DashboardCliente", label: "Mi Perfil" },
   ];
 
   return (
