@@ -35,13 +35,13 @@ jobs:
     - name: Create .env files from secrets
       run: |
         echo "📦 Creando archivos .env..."
-        mkdir -p services/api-gateway services/auth-service services/pets-service services/appointment-service client/web-client certs
+        mkdir -p services/api-gateway services/auth-service services/pets-service services/appointment-service clients/web-client certs
 
         echo "${{ secrets.ENV_API_GATEWAY }}" > services/api-gateway/.env
         echo "${{ secrets.ENV_AUTH_SERVICE }}" > services/auth-service/.env
         echo "${{ secrets.ENV_PETS_SERVICE }}" > services/pets-service/.env
         echo "${{ secrets.ENV_APPOINTMENT_SERVICE }}" > services/appointment-service/.env
-        echo "${{ secrets.ENV_WEB_CLIENT }}" > client/web-client/.env
+        echo "${{ secrets.ENV_WEB_CLIENT }}" > clients/web-client/.env
 
         echo "${{ secrets.AZURE_CA_CERT }}" > certs/BaltimoreCyberTrustRoot.pem
         echo "✅ Archivos .env y certificado listos."
