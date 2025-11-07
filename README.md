@@ -1,5 +1,5 @@
 ﻿# PetTrack
-🐾 Aplicación Web para Clínicas Veterinarias - Documentación Oficial
+ Aplicación Web para Clínicas Veterinarias - Documentación Oficial
 
 ## Contexto y Necesidad.
 
