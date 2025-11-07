@@ -1,41 +1,82 @@
-name: CI/CD Pipeline
- 
+name: 🚀 CI/CD Pipeline - PetTrack Microservices
+
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
- 
 env:
-  REGISTRY: ${{ secrets.REGISTRY }}  # ejemplo: pettrackregistry.azurecr.io
-  IMAGE_NAME: veterinary-app
+  REGISTRY: ${{ secrets.REGISTRY }}        # ejemplo: pettrackregistry.azurecr.io
   TAG: latest
-  APP_NAME: veterinary-app
+  APP_NAME: pettrack
   COMPOSE_FILE: docker-compose.yml
- 
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
- 
+
     steps:
+    # ================================
+    # 🔹 Checkout del código
+    # ================================
     - name: Checkout code
-      uses: actions/checkout@v3
- 
+      uses: actions/checkout@v4
+
+    # ================================
+    # 🔐 Login a Azure
+    # ================================
     - name: Azure login
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
- 
-    - name: Docker login to ACR
+
+    # ================================
+    # 🧩 Crear archivos .env desde los secrets
+    # ================================
+    - name: Create .env files from secrets
+      run: |
+        echo "${{ secrets.ENV_API_GATEWAY }}" > api-gateway/.env
+        echo "${{ secrets.ENV_AUTH_SERVICE }}" > auth-service/.env
+        echo "${{ secrets.ENV_PETS_SERVICE }}" > pets-service/.env
+        echo "${{ secrets.ENV_APPOINTMENT_SERVICE }}" > appointment-service/.env
+
+        mkdir -p ./certs
+        echo "${{ secrets.AZURE_CA_CERT }}" > ./certs/BaltimoreCyberTrustRoot.pem
+
+        echo "✅ .env files created for all microservices"
+
+    # ================================
+    # 🐳 Login al Azure Container Registry
+    # ================================
+    - name: Docker login to Azure Container Registry
       uses: azure/docker-login@v1
       with:
         login-server: ${{ secrets.REGISTRY }}
         username: ${{ secrets.REGISTRY_USERNAME }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
- 
+
+    # ================================
+    # ⚙️ Build de imágenes
+    # ================================
     - name: Build Docker images
       run: docker compose -f $COMPOSE_FILE build
- 
+
+    # ================================
+    # 📦 Push de imágenes al ACR
+    # ================================
     - name: Push Docker images to Azure Container Registry
       run: docker compose -f $COMPOSE_FILE push
+
+    # ================================
+    # 🚀 (Opcional) Desplegar a Azure Web App for Containers
+    # ================================
+    - name: Deploy to Azure Web App for Containers
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ env.APP_NAME }}
+        images: |
+          ${{ env.REGISTRY }}/${{ env.APP_NAME }}-api-gateway:${{ env.TAG }}
+          ${{ env.REGISTRY }}/${{ env.APP_NAME }}-auth-service:${{ env.TAG }}
+          ${{ env.REGISTRY }}/${{ env.APP_NAME }}-pets-service:${{ env.TAG }}
+          ${{ env.REGISTRY }}/${{ env.APP_NAME }}-appointment-service:${{ env.TAG }}

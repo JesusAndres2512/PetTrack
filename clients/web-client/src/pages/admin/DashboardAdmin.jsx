@@ -1,6 +1,9 @@
 // src/pages/DashboardAdmin.jsx
 import Navbar from "../../components/Navbar.jsx"; // ✅ apunta a src/components/Navbar.jsx
 import Card from "../../components/Card.jsx";     // ✅ lo mismo para Card
+import ViewUsers from "../ViewUsers.jsx";      // ✅ apunta a src/pages/ViewUsers.jsx
+import ViewAppointments from "../ViewAppointments.jsx"; // ✅ apunta a src/pages/ViewAppointments.jsx
+import ViewPets from "../ViewPets.jsx";          // ✅ apunta a src/pages/ViewPets.jsx
 import { useNavigate } from "react-router-dom";
 
 export default function DashboardAdmin() {
@@ -18,19 +21,19 @@ export default function DashboardAdmin() {
             title="Gestión de Usuarios"
             description="Crea, edita o elimina cuentas de usuarios."
             buttonText="Ver Usuarios"
-            onClick={() => navigate("/users")}
+            onClick={() => navigate(ViewUsers)}
           />
           <Card
             title="Gestión de Citas"
             description="Revisa y administra las citas registradas."
             buttonText="Ver Citas"
-            onClick={() => navigate("/appointments")}
+            onClick={() => navigate(ViewAppointments)}
           />
           <Card
             title="Gestión de Mascotas"
             description="Consulta los perfiles de mascotas registradas."
             buttonText="Ver Mascotas"
-            onClick={() => navigate("/pets")}
+            onClick={() => navigate(ViewPets)}
           />
         </div>
       </div>
