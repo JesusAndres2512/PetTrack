@@ -72,7 +72,7 @@ jobs:
         docker build --no-cache -t $REGISTRY/pettrack-appointment-service:${{ env.TAG }} ./services/appointment-service
 
         # Cliente web
-        docker build --no-cache -t $REGISTRY/pettrack-web-client:${{ env.TAG }} ./client/web-client
+        docker build --no-cache -t $REGISTRY/pettrack-web-client:${{ env.TAG }} ./clients/web-client
 
         # Etiquetar también con el commit SHA para tracking
         docker tag $REGISTRY/pettrack-api-gateway:${{ env.TAG }} $REGISTRY/pettrack-api-gateway:${{ env.COMMIT_TAG }}
