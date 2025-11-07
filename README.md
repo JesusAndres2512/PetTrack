@@ -132,7 +132,7 @@ docker compose down --volumes --remove-orphans
 Desarrollado como solución tecnológica para mejorar la gestión de clínicas veterinarias mediante microservicios desplegados en Azure.
 
 **Equipo PetTrack**  
-Arnol Pérez - Jesus Cabezas -Daniel Leon
+Arnol Pérez - Jesus Cabezas - Daniel Leon
 
 
 
