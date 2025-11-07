@@ -1,7 +1,7 @@
 ﻿# PetTrack
 🐾 Aplicación Web para Clínicas Veterinarias - Documentación Oficial
 
-## 📋 Contexto y Necesidad
+## pipi Contexto y Necesidad
 
 Las clínicas veterinarias enfrentan dificultades en la gestión de citas, organización de historiales clínicos y comunicación con los propietarios de mascotas. Esto genera:
 
