@@ -3,6 +3,7 @@ import Navbar from "../../components/Navbar.jsx"; // ✅ apunta a src/components
 import Card from "../../components/Card.jsx";     // ✅ lo mismo para Card
 import { useNavigate } from "react-router-dom";
 
+
 export default function DashboardAdmin() {
   const navigate = useNavigate();
 
@@ -18,19 +19,19 @@ export default function DashboardAdmin() {
             title="Gestión de Usuarios"
             description="Crea, edita o elimina cuentas de usuarios."
             buttonText="Ver Usuarios"
-            onClick={() => navigate("/users")}
+            onClick={() => navigate("/admin/users")}
           />
           <Card
             title="Gestión de Citas"
             description="Revisa y administra las citas registradas."
             buttonText="Ver Citas"
-            onClick={() => navigate("/appointments")}
+            onClick={() => navigate("/admin/appointments")}
           />
           <Card
             title="Gestión de Mascotas"
             description="Consulta los perfiles de mascotas registradas."
             buttonText="Ver Mascotas"
-            onClick={() => navigate("/pets")}
+            onClick={() => navigate("/admin/pets")}
           />
         </div>
       </div>

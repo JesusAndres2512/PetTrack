@@ -12,7 +12,6 @@ from .config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Auth Service")
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
@@ -118,3 +117,50 @@ def dashboard(role: str, current_user: models.User = Depends(get_current_user)):
             raise HTTPException(status_code=403, detail="Acceso denegado a este recurso")
         return {"message": f"Bienvenido al dashboard de usuario, {current_user.username}"}
     
+# ============================================================
+# 🔹 Eliminar usuario (solo admin)
+# ============================================================
+@app.delete("/users/{user_id}", status_code=204)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(role_required(["admin"]))
+):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    db.delete(user)
+    db.commit()
+    return {"message": f"Usuario con ID {user_id} eliminado correctamente"}
+
+
+# ============================================================
+# 🔹 Editar usuario (solo admin)
+# ============================================================
+@app.put("/users/{user_id}", response_model=schemas.UserResponse)
+def update_user(
+    user_id: int,
+    updated_data: schemas.UserUpdate,  # debes crear este esquema en schemas.py
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(role_required(["admin"]))
+):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Actualizar campos básicos (solo si vienen en la solicitud)
+    if updated_data.username:
+        user.username = updated_data.username
+    if updated_data.email:
+        user.email = updated_data.email
+    if updated_data.role:
+        if updated_data.role not in ["user", "doctor", "admin"]:
+            raise HTTPException(status_code=400, detail="Rol no válido")
+        user.role = updated_data.role
+    if updated_data.password:
+        user.hashed_password = pwd_context.hash(updated_data.password)
+
+    db.commit()
+    db.refresh(user)
+    return user
