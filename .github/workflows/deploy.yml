@@ -35,12 +35,13 @@ jobs:
     - name: Create .env files from secrets
       run: |
         echo "📦 Creando archivos .env..."
-        mkdir -p services/api-gateway services/auth-service services/pets-service services/appointment-service certs
+        mkdir -p services/api-gateway services/auth-service services/pets-service services/appointment-service client/web-client certs
 
         echo "${{ secrets.ENV_API_GATEWAY }}" > services/api-gateway/.env
         echo "${{ secrets.ENV_AUTH_SERVICE }}" > services/auth-service/.env
         echo "${{ secrets.ENV_PETS_SERVICE }}" > services/pets-service/.env
         echo "${{ secrets.ENV_APPOINTMENT_SERVICE }}" > services/appointment-service/.env
+        echo "${{ secrets.ENV_WEB_CLIENT }}" > client/web-client/.env
 
         echo "${{ secrets.AZURE_CA_CERT }}" > certs/BaltimoreCyberTrustRoot.pem
         echo "✅ Archivos .env y certificado listos."
@@ -64,16 +65,21 @@ jobs:
 
         REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}
 
+        # Microservicios backend
         docker build --no-cache -t $REGISTRY/pettrack-api-gateway:${{ env.TAG }} ./services/api-gateway
         docker build --no-cache -t $REGISTRY/pettrack-auth-service:${{ env.TAG }} ./services/auth-service
         docker build --no-cache -t $REGISTRY/pettrack-pets-service:${{ env.TAG }} ./services/pets-service
         docker build --no-cache -t $REGISTRY/pettrack-appointment-service:${{ env.TAG }} ./services/appointment-service
+
+        # Cliente web
+        docker build --no-cache -t $REGISTRY/pettrack-web-client:${{ env.TAG }} ./client/web-client
 
         # Etiquetar también con el commit SHA para tracking
         docker tag $REGISTRY/pettrack-api-gateway:${{ env.TAG }} $REGISTRY/pettrack-api-gateway:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-auth-service:${{ env.TAG }} $REGISTRY/pettrack-auth-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-pets-service:${{ env.TAG }} $REGISTRY/pettrack-pets-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-appointment-service:${{ env.TAG }} $REGISTRY/pettrack-appointment-service:${{ env.COMMIT_TAG }}
+        docker tag $REGISTRY/pettrack-web-client:${{ env.TAG }} $REGISTRY/pettrack-web-client:${{ env.COMMIT_TAG }}
 
         echo "✅ Imágenes construidas y etiquetadas correctamente."
 
@@ -89,10 +95,12 @@ jobs:
         docker push $REGISTRY/pettrack-auth-service:${{ env.TAG }}
         docker push $REGISTRY/pettrack-pets-service:${{ env.TAG }}
         docker push $REGISTRY/pettrack-appointment-service:${{ env.TAG }}
+        docker push $REGISTRY/pettrack-web-client:${{ env.TAG }}
 
         docker push $REGISTRY/pettrack-api-gateway:${{ env.COMMIT_TAG }}
         docker push $REGISTRY/pettrack-auth-service:${{ env.COMMIT_TAG }}
         docker push $REGISTRY/pettrack-pets-service:${{ env.COMMIT_TAG }}
         docker push $REGISTRY/pettrack-appointment-service:${{ env.COMMIT_TAG }}
+        docker push $REGISTRY/pettrack-web-client:${{ env.COMMIT_TAG }}
 
         echo "✅ Todas las imágenes fueron subidas correctamente al ACR."
