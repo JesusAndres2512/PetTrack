@@ -5,9 +5,10 @@ on:
     branches: [main]
 
 env:
-  TAG: latest
-  APP_NAME: PetTrackContainer
+  APP_NAME: pettrack
   COMPOSE_FILE: docker-compose.yml
+  TAG: latest
+  COMMIT_TAG: ${{ github.sha }}
 
 jobs:
   build-and-deploy:
@@ -33,8 +34,7 @@ jobs:
     # ================================
     - name: Create .env files from secrets
       run: |
-        echo "📦 Creando archivos .env para cada microservicio..."
-
+        echo "📦 Creando archivos .env..."
         mkdir -p services/api-gateway services/auth-service services/pets-service services/appointment-service certs
 
         echo "${{ secrets.ENV_API_GATEWAY }}" > services/api-gateway/.env
@@ -43,8 +43,7 @@ jobs:
         echo "${{ secrets.ENV_APPOINTMENT_SERVICE }}" > services/appointment-service/.env
 
         echo "${{ secrets.AZURE_CA_CERT }}" > certs/BaltimoreCyberTrustRoot.pem
-
-        echo "✅ Archivos .env y certificado creados correctamente"
+        echo "✅ Archivos .env y certificado listos."
 
     # ================================
     # 🐳 Login al Azure Container Registry
@@ -57,19 +56,43 @@ jobs:
         password: ${{ secrets.ACR_PASSWORD }}
 
     # ================================
-    # ⚙️ Build de imágenes Docker (sin caché)
+    # 🏗️ Build y Tag de imágenes (sin cache)
     # ================================
-    - name: Build Docker images (no cache)
+    - name: Build and tag Docker images
       run: |
-        echo "🏗️ Construyendo imágenes Docker sin caché..."
-        docker compose -f $COMPOSE_FILE build --no-cache
-        echo "✅ Build completado sin caché"
+        echo "🏗️ Construyendo imágenes sin caché y etiquetando para ACR..."
+
+        REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}
+
+        docker build --no-cache -t $REGISTRY/pettrack-api-gateway:${{ env.TAG }} ./services/api-gateway
+        docker build --no-cache -t $REGISTRY/pettrack-auth-service:${{ env.TAG }} ./services/auth-service
+        docker build --no-cache -t $REGISTRY/pettrack-pets-service:${{ env.TAG }} ./services/pets-service
+        docker build --no-cache -t $REGISTRY/pettrack-appointment-service:${{ env.TAG }} ./services/appointment-service
+
+        # Etiquetar también con el commit SHA para tracking
+        docker tag $REGISTRY/pettrack-api-gateway:${{ env.TAG }} $REGISTRY/pettrack-api-gateway:${{ env.COMMIT_TAG }}
+        docker tag $REGISTRY/pettrack-auth-service:${{ env.TAG }} $REGISTRY/pettrack-auth-service:${{ env.COMMIT_TAG }}
+        docker tag $REGISTRY/pettrack-pets-service:${{ env.TAG }} $REGISTRY/pettrack-pets-service:${{ env.COMMIT_TAG }}
+        docker tag $REGISTRY/pettrack-appointment-service:${{ env.TAG }} $REGISTRY/pettrack-appointment-service:${{ env.COMMIT_TAG }}
+
+        echo "✅ Imágenes construidas y etiquetadas correctamente."
 
     # ================================
-    # 📦 Push de imágenes al ACR (forzado)
+    # 📦 Push de imágenes al ACR
     # ================================
-    - name: Push Docker images to Azure Container Registry
+    - name: Push Docker images to ACR
       run: |
-        echo "📤 Subiendo todas las imágenes al Azure Container Registry (forzado)..."
-        docker compose -f $COMPOSE_FILE push --ignore-push-failures
-        echo "✅ Push completado correctamente (sin skip)"
+        echo "📤 Enviando imágenes al Azure Container Registry..."
+        REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}
+
+        docker push $REGISTRY/pettrack-api-gateway:${{ env.TAG }}
+        docker push $REGISTRY/pettrack-auth-service:${{ env.TAG }}
+        docker push $REGISTRY/pettrack-pets-service:${{ env.TAG }}
+        docker push $REGISTRY/pettrack-appointment-service:${{ env.TAG }}
+
+        docker push $REGISTRY/pettrack-api-gateway:${{ env.COMMIT_TAG }}
+        docker push $REGISTRY/pettrack-auth-service:${{ env.COMMIT_TAG }}
+        docker push $REGISTRY/pettrack-pets-service:${{ env.COMMIT_TAG }}
+        docker push $REGISTRY/pettrack-appointment-service:${{ env.COMMIT_TAG }}
+
+        echo "✅ Todas las imágenes fueron subidas correctamente al ACR."
