@@ -6,6 +6,7 @@ import ViewAppointments from "../ViewAppointments.jsx"; // ✅ apunta a src/page
 import ViewPets from "../ViewPets.jsx";          // ✅ apunta a src/pages/ViewPets.jsx
 import { useNavigate } from "react-router-dom";
 
+
 export default function DashboardAdmin() {
   const navigate = useNavigate();
 
