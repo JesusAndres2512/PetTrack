@@ -1,6 +1,6 @@
 // src/services/authService.js
 import axios from "axios";
-const API_URL = "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_GATEWAY;
 
 export const login = async (data) => (await axios.post(`${API_URL}/login`, data)).data;
 export const register = async (data) => (await axios.post(`${API_URL}/register`, data)).data;

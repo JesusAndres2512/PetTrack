@@ -1,6 +1,9 @@
 // src/pages/DashboardAdmin.jsx
 import Navbar from "../../components/Navbar.jsx"; // ✅ apunta a src/components/Navbar.jsx
 import Card from "../../components/Card.jsx";     // ✅ lo mismo para Card
+import ViewUsers from "../ViewUsers.jsx";      // ✅ apunta a src/pages/ViewUsers.jsx
+import ViewAppointments from "../ViewAppointments.jsx"; // ✅ apunta a src/pages/ViewAppointments.jsx
+import ViewPets from "../ViewPets.jsx";          // ✅ apunta a src/pages/ViewPets.jsx
 import { useNavigate } from "react-router-dom";
 
 
