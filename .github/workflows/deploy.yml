@@ -77,15 +77,3 @@ jobs:
         docker compose -f $COMPOSE_FILE push
         echo "✅ Push completado correctamente"
 
-    # ================================
-    # 🚀 Despliegue a Azure Web App for Containers
-    # ================================
-    - name: Deploy to Azure Web App for Containers
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: ${{ env.APP_NAME }}
-        images: |
-          ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-api-gateway:${{ env.TAG }}
-          ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-auth-service:${{ env.TAG }}
-          ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-pets-service:${{ env.TAG }}
-          ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-appointment-service:${{ env.TAG }}
