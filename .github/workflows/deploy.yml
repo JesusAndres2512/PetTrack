@@ -15,7 +15,7 @@ jobs:
 
     steps:
     # ================================
-    # 🔹 Checkout del código
+    # 🔹 Checkout del código fuente
     # ================================
     - name: Checkout code
       uses: actions/checkout@v4
@@ -33,17 +33,21 @@ jobs:
     # ================================
     - name: Create .env files from secrets
       run: |
-        mkdir -p api-gateway auth-service pets-service appointment-service certs
+        echo "📦 Creando archivos .env para cada microservicio..."
 
-        echo "${{ secrets.ENV_API_GATEWAY }}" > api-gateway/.env
-        echo "${{ secrets.ENV_AUTH_SERVICE }}" > auth-service/.env
-        echo "${{ secrets.ENV_PETS_SERVICE }}" > pets-service/.env
-        echo "${{ secrets.ENV_APPOINTMENT_SERVICE }}" > appointment-service/.env
+        # Crear carpetas necesarias
+        mkdir -p services/api-gateway services/auth-service services/pets-service services/appointment-service certs
 
-        mkdir -p ./certs
-        echo "${{ secrets.AZURE_CA_CERT }}" > ./certs/BaltimoreCyberTrustRoot.pem
+        # Crear los .env a partir de los secrets
+        echo "${{ secrets.ENV_API_GATEWAY }}" > services/api-gateway/.env
+        echo "${{ secrets.ENV_AUTH_SERVICE }}" > services/auth-service/.env
+        echo "${{ secrets.ENV_PETS_SERVICE }}" > services/pets-service/.env
+        echo "${{ secrets.ENV_APPOINTMENT_SERVICE }}" > services/appointment-service/.env
 
-        echo "✅ .env files created for all microservices"
+        # Agregar certificado SSL
+        echo "${{ secrets.AZURE_CA_CERT }}" > certs/BaltimoreCyberTrustRoot.pem
+
+        echo "✅ .env files creados en /services/* y certificado agregado correctamente"
 
     # ================================
     # 🐳 Login al Azure Container Registry
@@ -56,26 +60,32 @@ jobs:
         password: ${{ secrets.ACR_PASSWORD }}
 
     # ================================
-    # ⚙️ Build de imágenes
+    # ⚙️ Build de imágenes Docker
     # ================================
     - name: Build Docker images
-      run: docker compose -f $COMPOSE_FILE build
+      run: |
+        echo "🏗️ Construyendo imágenes Docker..."
+        docker compose -f $COMPOSE_FILE build
+        echo "✅ Build completado"
 
     # ================================
     # 📦 Push de imágenes al ACR
     # ================================
     - name: Push Docker images to Azure Container Registry
-      run: docker compose -f $COMPOSE_FILE push
+      run: |
+        echo "📤 Subiendo imágenes al Azure Container Registry..."
+        docker compose -f $COMPOSE_FILE push
+        echo "✅ Push completado correctamente"
 
     # ================================
-    # 🚀 (Opcional) Desplegar a Azure Web App for Containers
+    # 🚀 Despliegue a Azure Web App for Containers
     # ================================
     - name: Deploy to Azure Web App for Containers
       uses: azure/webapps-deploy@v2
       with:
         app-name: ${{ env.APP_NAME }}
         images: |
-          ${{ env.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-api-gateway:${{ env.TAG }}
-          ${{ env.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-auth-service:${{ env.TAG }}
-          ${{ env.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-pets-service:${{ env.TAG }}
-          ${{ env.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-appointment-service:${{ env.TAG }}
+          ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-api-gateway:${{ env.TAG }}
+          ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-auth-service:${{ env.TAG }}
+          ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-pets-service:${{ env.TAG }}
+          ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.APP_NAME }}-appointment-service:${{ env.TAG }}
