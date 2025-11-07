@@ -2,12 +2,9 @@ name: 🚀 CI/CD Pipeline - PetTrack Microservices
 
 on:
   push:
-    branches: [prueba]
-  pull_request:
     branches: [main]
 
 env:
-  REGISTRY: ${{ secrets.ACR_LOGIN_SERVER }}        # ejemplo: pettrackregistry.azurecr.io
   TAG: latest
   APP_NAME: pettrack
   COMPOSE_FILE: docker-compose.yml
