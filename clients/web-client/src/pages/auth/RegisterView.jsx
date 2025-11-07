@@ -7,7 +7,7 @@ export default function RegisterView() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
-  const [role, setRole] = useState("cliente");
+  const [role, setRole] = useState("user");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 

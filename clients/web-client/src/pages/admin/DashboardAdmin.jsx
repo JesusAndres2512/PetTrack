@@ -6,6 +6,7 @@ import ViewAppointments from "../ViewAppointments.jsx"; // ✅ apunta a src/page
 import ViewPets from "../ViewPets.jsx";          // ✅ apunta a src/pages/ViewPets.jsx
 import { useNavigate } from "react-router-dom";
 
+
 export default function DashboardAdmin() {
   const navigate = useNavigate();
 
@@ -21,19 +22,19 @@ export default function DashboardAdmin() {
             title="Gestión de Usuarios"
             description="Crea, edita o elimina cuentas de usuarios."
             buttonText="Ver Usuarios"
-            onClick={() => navigate(ViewUsers)}
+            onClick={() => navigate("/admin/users")}
           />
           <Card
             title="Gestión de Citas"
             description="Revisa y administra las citas registradas."
             buttonText="Ver Citas"
-            onClick={() => navigate(ViewAppointments)}
+            onClick={() => navigate("/admin/appointments")}
           />
           <Card
             title="Gestión de Mascotas"
             description="Consulta los perfiles de mascotas registradas."
             buttonText="Ver Mascotas"
-            onClick={() => navigate(ViewPets)}
+            onClick={() => navigate("/admin/pets")}
           />
         </div>
       </div>

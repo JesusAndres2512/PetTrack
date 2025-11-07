@@ -1,7 +1,7 @@
-﻿# PetTrack
-🐾 Aplicación Web para Clínicas Veterinarias - Documentación Oficial.
+﻿# PetTrack.
+ Aplicación Web para Clínicas Veterinarias - Documentación Oficial
 
-## 📋 Contexto y Necesidad
+## Contexto y Necesidad.
 
 Las clínicas veterinarias enfrentan dificultades en la gestión de citas, organización de historiales clínicos y comunicación con los propietarios de mascotas. Esto genera:
 
@@ -132,7 +132,7 @@ docker compose down --volumes --remove-orphans
 Desarrollado como solución tecnológica para mejorar la gestión de clínicas veterinarias mediante microservicios desplegados en Azure.
 
 **Equipo PetTrack**  
-DanieL Leona, Jesus Cabezotas & Arnol Pereza.
+Arnol Pérez - Jesus Cabezas - Daniel Leon
 
 
 

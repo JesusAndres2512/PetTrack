@@ -17,13 +17,13 @@ export default function DashboardDoctor() {
             title="Citas del Día"
             description="Consulta tus citas programadas para hoy."
             buttonText="Ver Citas"
-            onClick={() => navigate("../pages/CitasClienteView.jsx")}
+            onClick={() => navigate("/doctor/citas")}
           />
           <Card
             title="Pacientes"
             description="Visualiza y actualiza los historiales médicos de las mascotas."
             buttonText="Ver Mascotas"
-            onClick={() => navigate("../pages/MascotasView.jsx")}
+            onClick={() => navigate("/doctor/seguimiento")}
           />
         </div>
       </div>

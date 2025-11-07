@@ -8,23 +8,33 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token") || "");
-  const [loading, setLoading] = useState(true); // Para evitar flash de contenido
+  const [loading, setLoading] = useState(true); // Evita el flash de contenido mientras carga el estado
 
   // 🔹 Cargar perfil si ya hay token guardado
   useEffect(() => {
     const fetchProfile = async () => {
-      if (token) {
-        try {
-          const data = await getProfile();
-          setUser(data);
-        } catch (err) {
-          console.warn("Token inválido o expirado, cerrando sesión", err);
-          logout();
-        }
+      if (!token) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const data = await getProfile();
+        setUser(data);
+      } catch (err) {
+        console.warn(
+          "Token inválido o expirado. No se cerrará sesión automáticamente en login fallido.",
+          err
+        );
+        // 🔹 Solo cerrar sesión si ya había usuario autenticado antes
+        if (user) logout();
+      } finally {
+        setLoading(false);
+      }
     };
+
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // 🔹 Login
@@ -36,7 +46,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.access_token);
       localStorage.setItem("token", data.access_token);
 
-      // 🔹 Guardar usuario en estado
+      // 🔹 Crear objeto de usuario con los datos devueltos
       const loggedUser = {
         id: data.user_id,
         username: data.username,
@@ -45,11 +55,11 @@ export const AuthProvider = ({ children }) => {
       };
       setUser(loggedUser);
 
-      // 🔹 Retornar usuario para que LoginView pueda usarlo
+      // 🔹 Retornar usuario para redirección
       return loggedUser;
     } catch (err) {
       console.error("Error en login:", err);
-      throw err; // deja que LoginView maneje el error
+      throw err; // Deja que el LoginView maneje el error
     }
   };
 
@@ -62,7 +72,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, token, loading, login, logout }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
