@@ -46,6 +46,21 @@ services:
     networks:
       - backend
 
+  # === REWARDS SERVICE ===
+  rewards-service:
+    build: ./services/rewards-service
+    container_name: rewards_service
+    env_file:
+      - ./services/rewards-service/.env
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./services/rewards-service:/app
+      - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
+    restart: always
+    networks:
+      - backend
+
   # === API GATEWAY ===
   api-gateway:
     build: ./services/api-gateway
@@ -58,10 +73,12 @@ services:
       AUTH_SERVICE_URL: "http://auth-service:8000"
       PETS_SERVICE_URL: "http://pets-service:8001"
       APPOINTMENTS_SERVICE_URL: "http://appointment-service:8002"
+      REWARDS_SERVICE_URL: "http://rewards-service:8004"
     depends_on:
       - auth-service
       - pets-service
       - appointment-service
+      - rewards-service
     restart: always
     networks:
       - backend
@@ -71,7 +88,7 @@ services:
     build: ./clients/web-client
     container_name: web_client
     ports:
-      - "80:80"   # ✅ producción estable
+      - "80:80"   # ✅ puerto público para producción
     depends_on:
       - api-gateway
     environment:
@@ -90,3 +107,4 @@ volumes:
   auth_data:
   pets_data:
   appointments_data:
+  rewards_data:

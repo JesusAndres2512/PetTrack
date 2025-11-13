@@ -9,6 +9,7 @@ import MenuCliente from "../pages/cliente/MenuCliente.jsx";
 import DashboardCliente from "../pages/cliente/DashboardCliente.jsx";
 import MascotasView from "../pages/cliente/MascotasView.jsx";
 import CitasClienteView from "../pages/cliente/CitasClienteView.jsx";
+import Recompensas from '../pages/RewardsUsers.jsx';
 
 // DOCTOR
 import MenuDoctor from "../pages/doctor/MenuDoctor.jsx";
@@ -27,6 +28,7 @@ import ViewAppointments from "../pages/ViewAppointments.jsx";
 
 // ProtectedRoute
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
+import RewardsUsers from "../pages/RewardsUsers.jsx";
 
 export default function AppRouter() {
   return (
@@ -44,6 +46,8 @@ export default function AppRouter() {
         <Route path="/user/dashboard" element={<DashboardCliente />} />
         <Route path="/user/mascotas" element={<MascotasView />} />
         <Route path="/user/citas" element={<CitasClienteView />} />
+        <Route path="/user/rewards" element={<RewardsUsers />} />
+
       </Route>
 
       {/* DOCTOR */}
