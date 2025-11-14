@@ -1,8 +1,6 @@
-version: '3.8'
+version: "3.9"
 
 services:
-<<<<<<< Updated upstream
-=======
   # === DATABASE (MySQL) ===
   mysql:
     image: mysql:8.0
@@ -38,23 +36,11 @@ services:
       - backend
 
   # === PETS SERVICE ===
->>>>>>> Stashed changes
   pets-service:
     build: ./services/pets-service
-    image: pettrackregistry.azurecr.io/veterinary-app-pets-service:latest
     container_name: pets_service
-    ports:
-      - "8003:8000"
     env_file:
       - ./services/pets-service/.env
-<<<<<<< Updated upstream
-  #  depends_on:
-   #   db:
-    #    condition: service_healthy
-    volumes:
-      - ./services/pets-service/app:/app/app
-
-=======
     environment:
       DATABASE_URL: "mysql+pymysql://root:rootpassword@mysql:3306/pettrack_db"
     ports:
@@ -136,63 +122,23 @@ services:
       - backend
 
   # === API GATEWAY ===
->>>>>>> Stashed changes
   api-gateway:
     build: ./services/api-gateway
-    image: pettrackregistry.azurecr.io/veterinary-app-api-gateway:latest
     container_name: api_gateway
     ports:
-      - "8002:8002"
+      - "8003:8003"
+    env_file:
+      - ./services/api-gateway/.env
     environment:
-<<<<<<< Updated upstream
-      - AUTH_SERVICE_URL=http://auth-service:8000
-      - APPOINTMENTS_SERVICE_URL=http://appointments-service:8000
-      - PETS_SERVICE_URL=http://pets-service:8000
-=======
       AUTH_SERVICE_URL: "http://auth-service:8000"
       PETS_SERVICE_URL: "http://pets-service:8001"
       APPOINTMENTS_SERVICE_URL: "http://appointment-service:8002"
       RECOMPENSAS_SERVICE_URL: "http://recompensas-service:8004"
 ##      SEGUIMIENTO_SERVICE_URL: "http://seguimiento-service:8005"
       POSTCONSULTA_SERVICE_URL: "http://postconsulta-service:8006"
->>>>>>> Stashed changes
     depends_on:
       - auth-service
-      - appointments-service
       - pets-service
-<<<<<<< Updated upstream
-
-  auth-service:
-    build: ./services/auth-service
-    image: pettrackregistry.azurecr.io/veterinary-app-auth-service:latest
-    container_name: auth_service
-    ports:
-      - "8000:8000"
-    env_file:
-      - ./services/auth-service/.env
-    #depends_on:
-     # db:
-      #  condition: service_healthy
-    volumes:
-      - ./services/auth-service:/app
-
-  appointments-service:
-    build: ./services/appointments-service
-    image: pettrackregistry.azurecr.io/veterinary-app-appointments-service:latest
-    container_name: appointments_service
-    ports:
-      - "8001:8000"
-    env_file:
-      - ./services/appointments-service/.env
-    #depends_on:
-     # db:
-      #  condition: service_healthy
-    volumes:
-      - ./services/appointments-service:/app
-      - /app/node_modules
-
-  web-client:
-=======
       - appointment-service
       - recompensas-service
 #     - seguimiento-service
@@ -203,29 +149,26 @@ services:
 
   # === WEB CLIENT ===
   client:
->>>>>>> Stashed changes
     build: ./clients/web-client
-    image: pettrackregistry.azurecr.io/veterinary-app-web-client:latest
     container_name: web_client
     ports:
-<<<<<<< Updated upstream
-      - "8080:8080"
-=======
       - "80:80"
->>>>>>> Stashed changes
     depends_on:
-      - auth-service
-      - appointments-service
-      - pets-service
-    volumes:
-      - ./clients/web-client:/app
+      - api-gateway
+    environment:
+      VITE_API_GATEWAY: "http://api-gateway:8003"
+    restart: always
+    networks:
+      - backend
 
+# === NETWORKS ===
+networks:
+  backend:
+    driver: bridge
+
+# === VOLUMES ===
 volumes:
-<<<<<<< Updated upstream
-  vet_db_data:
-=======
   mysql_data:
   auth_data:
   pets_data:
   appointments_data:
->>>>>>> Stashed changes
