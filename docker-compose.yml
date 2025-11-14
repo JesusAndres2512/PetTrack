@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # === AUTH SERVICE ===
   auth-service:
@@ -71,6 +69,21 @@ services:
       - "8004:8000"
     volumes:
       - ./services/postconsult-service:/app
+      - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
+    restart: always
+    networks:
+      - backend
+
+  # === API GATEWAY ===
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: api_gateway
+    env_file:
+      - ./services/api-gateway/.env
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./services/api-gateway:/app
       - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
     restart: always
     networks:
