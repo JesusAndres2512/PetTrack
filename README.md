@@ -24,7 +24,8 @@ Este proyecto sigue una arquitectura basada en microservicios, todos gestionados
 - **auth-service**: Gestión de usuarios (Doctor/Dueño) y autenticación JWT.
 - **pets-service**: Registro de mascotas al sistema.
 - **appointment-service**: Agendamiento y gestión de citas.
-- **api-gateway**: Puerta de entrada, documentación y enrutamiento.
+- **rewards-service**:
+- **postconsult**:
 - **web-client**: Cliente web con (HTML/CSS).
 
 ## 🛠️ Tecnologías Utilizadas
