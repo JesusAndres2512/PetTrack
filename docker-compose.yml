@@ -74,29 +74,12 @@ services:
     networks:
       - backend
 
-  # === API GATEWAY ===
-  api-gateway:
-    build: ./services/api-gateway
-    container_name: api_gateway
-    env_file:
-      - ./services/api-gateway/.env
-    ports:
-      - "8005:8000"
-    volumes:
-      - ./services/api-gateway:/app
-      - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
-    restart: always
-    networks:
-      - backend
-
   # === WEB CLIENT ===
   client:
     build: ./clients/web-client
     container_name: web_client
     ports:
       - "80:80"
-    depends_on:
-      - api-gateway
     env_file:
       - ./clients/web-client/.env
     restart: always
