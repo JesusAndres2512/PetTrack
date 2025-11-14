@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")  # cambia por cada microservicio
+DB_NAME = os.getenv("APPOINTMENT_DB_NAME")  # cambia por cada microservicio
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 SSL_CA = os.path.join(os.path.dirname(__file__), "../DigiCertGlobalRootG2.pem")

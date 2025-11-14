@@ -1,4 +1,4 @@
 import os
 
-COSMOS_DB_URL = os.getenv("COSMOS_DB_URL")
-COSMOS_DB_NAME = os.getenv("COSMOS_DB_NAME")
+COSMOS_DB_URL = os.getenv("REWARDS_COSMOS_DB_URL")
+COSMOS_DB_NAME = os.getenv("REWARDS_COSMOS_DB_NAME")

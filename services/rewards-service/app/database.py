@@ -4,8 +4,8 @@ from pymongo import MongoClient
 
 load_dotenv()
 
-COSMOS_DB_URI = os.getenv("COSMOS_MONGO_URL")
-COSMOS_DB_NAME = os.getenv("DATABASE_NAME")
+COSMOS_DB_URI = os.getenv("REWARDS_COSMOS_MONGO_URL")
+COSMOS_DB_NAME = os.getenv("REWARDS_DATABASE_NAME")
 
 # Conexión al cliente
 client = MongoClient(COSMOS_DB_URI)
