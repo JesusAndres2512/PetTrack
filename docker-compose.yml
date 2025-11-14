@@ -84,8 +84,8 @@ services:
       - "80:80"
     depends_on:
       - api-gateway
-    environment:
-      VITE_API_GATEWAY: "http://api-gateway:8003"
+    env_file:
+      - ./clients/web-client/.env
     restart: always
     networks:
       - backend
