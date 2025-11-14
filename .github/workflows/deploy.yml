@@ -5,8 +5,6 @@ on:
     branches: [main]
 
 env:
-  APP_NAME: pettrack
-  COMPOSE_FILE: docker-compose.yml
   TAG: latest
   COMMIT_TAG: ${{ github.sha }}
 
@@ -15,50 +13,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # ================================
-    # 🔹 Checkout del código fuente
-    # ================================
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # ================================
-    # 🔐 Login a Azure
-    # ================================
+    # 🔐 Login a Azure usando Service Principal
     - name: Azure login
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    # ================================
-    # 🐳 Login a Azure Container Registry
-    # ================================
-    - name: Docker login to Azure Container Registry
+    # 🐳 Login al ACR usando los secrets
+    - name: Docker login to ACR
       uses: azure/docker-login@v1
       with:
         login-server: ${{ secrets.ACR_LOGIN_SERVER }}
         username: ${{ secrets.ACR_USERNAME }}
         password: ${{ secrets.ACR_PASSWORD }}
 
-    # ================================
-    # 🏗️ Build y Tag de imágenes (sin cache)
-    # ================================
+    # 🏗️ Build sin caché + tags
     - name: Build and tag Docker images
       run: |
-        echo "🏗️ Construyendo imágenes sin caché y etiquetando para ACR..."
-
         REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}
 
-        # Microservicios backend
+        echo "Construyendo imágenes..."
+
         docker build --no-cache -t $REGISTRY/pettrack-auth-service:${{ env.TAG }} ./services/auth-service
         docker build --no-cache -t $REGISTRY/pettrack-pets-service:${{ env.TAG }} ./services/pets-service
         docker build --no-cache -t $REGISTRY/pettrack-appointment-service:${{ env.TAG }} ./services/appointment-service
         docker build --no-cache -t $REGISTRY/pettrack-rewards-service:${{ env.TAG }} ./services/rewards-service
         docker build --no-cache -t $REGISTRY/pettrack-postconsult-service:${{ env.TAG }} ./services/postconsult-service
-
-        # Cliente web
         docker build --no-cache -t $REGISTRY/pettrack-web-client:${{ env.TAG }} ./clients/web-client
 
-        # Etiquetar también con el commit SHA para tracking
+        # Etiquetas adicionales
         docker tag $REGISTRY/pettrack-auth-service:${{ env.TAG }} $REGISTRY/pettrack-auth-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-pets-service:${{ env.TAG }} $REGISTRY/pettrack-pets-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-appointment-service:${{ env.TAG }} $REGISTRY/pettrack-appointment-service:${{ env.COMMIT_TAG }}
@@ -66,17 +52,11 @@ jobs:
         docker tag $REGISTRY/pettrack-postconsult-service:${{ env.TAG }} $REGISTRY/pettrack-postconsult-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-web-client:${{ env.TAG }} $REGISTRY/pettrack-web-client:${{ env.COMMIT_TAG }}
 
-        echo "✅ Imágenes construidas y etiquetadas correctamente."
-
-    # ================================
-    # 📦 Push de imágenes al ACR
-    # ================================
-    - name: Push Docker images to ACR
+    # 📦 Push
+    - name: Push images to ACR
       run: |
-        echo "📤 Enviando imágenes al Azure Container Registry..."
         REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}
 
-        # Push TAG latest
         docker push $REGISTRY/pettrack-auth-service:${{ env.TAG }}
         docker push $REGISTRY/pettrack-pets-service:${{ env.TAG }}
         docker push $REGISTRY/pettrack-appointment-service:${{ env.TAG }}
@@ -84,12 +64,9 @@ jobs:
         docker push $REGISTRY/pettrack-postconsult-service:${{ env.TAG }}
         docker push $REGISTRY/pettrack-web-client:${{ env.TAG }}
 
-        # Push TAG commit SHA
         docker push $REGISTRY/pettrack-auth-service:${{ env.COMMIT_TAG }}
         docker push $REGISTRY/pettrack-pets-service:${{ env.COMMIT_TAG }}
         docker push $REGISTRY/pettrack-appointment-service:${{ env.COMMIT_TAG }}
         docker push $REGISTRY/pettrack-rewards-service:${{ env.COMMIT_TAG }}
         docker push $REGISTRY/pettrack-postconsult-service:${{ env.COMMIT_TAG }}
         docker push $REGISTRY/pettrack-web-client:${{ env.COMMIT_TAG }}
-
-        echo "✅ Todas las imágenes fueron subidas correctamente al ACR."
