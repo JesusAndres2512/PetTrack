@@ -53,7 +53,7 @@ services:
     env_file:
       - ./services/rewards-service/.env
     ports:
-      - "8004:8000"
+      - "8003:8000"
     volumes:
       - ./services/rewards-service:/app
       - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
@@ -68,34 +68,10 @@ services:
     env_file:
       - ./services/postconsult-service/.env
     ports:
-      - "8005:8000"
+      - "8004:8000"
     volumes:
       - ./services/postconsult-service:/app
       - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
-    restart: always
-    networks:
-      - backend
-
-  # === API GATEWAY ===
-  api-gateway:
-    build: ./services/api-gateway
-    container_name: api_gateway
-    ports:
-      - "8003:8003"
-    env_file:
-      - ./services/api-gateway/.env
-    environment:
-      AUTH_SERVICE_URL: "http://auth-service:8000"
-      PETS_SERVICE_URL: "http://pets-service:8000"
-      APPOINTMENTS_SERVICE_URL: "http://appointment-service:8000"
-      REWARDS_SERVICE_URL: "http://rewards-service:8000"
-      POSTCONSULT_SERVICE_URL: "http://postconsult-service:8000"
-    depends_on:
-      - auth-service
-      - pets-service
-      - appointment-service
-      - rewards-service
-      - postconsult-service
     restart: always
     networks:
       - backend
