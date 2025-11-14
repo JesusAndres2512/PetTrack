@@ -53,9 +53,24 @@ services:
     env_file:
       - ./services/rewards-service/.env
     ports:
-      - "8004:8004"
+      - "8004:8000"
     volumes:
       - ./services/rewards-service:/app
+      - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
+    restart: always
+    networks:
+      - backend
+
+  # === POSTCONSULT SERVICE ===
+  postconsult-service:
+    build: ./services/postconsult-service
+    container_name: postconsult_service
+    env_file:
+      - ./services/postconsult-service/.env
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./services/postconsult-service:/app
       - ./certs/BaltimoreCyberTrustRoot.pem:/etc/ssl/certs/BaltimoreCyberTrustRoot.pem:ro
     restart: always
     networks:
@@ -71,24 +86,26 @@ services:
       - ./services/api-gateway/.env
     environment:
       AUTH_SERVICE_URL: "http://auth-service:8000"
-      PETS_SERVICE_URL: "http://pets-service:8001"
-      APPOINTMENTS_SERVICE_URL: "http://appointment-service:8002"
-      REWARDS_SERVICE_URL: "http://rewards-service:8004"
+      PETS_SERVICE_URL: "http://pets-service:8000"
+      APPOINTMENTS_SERVICE_URL: "http://appointment-service:8000"
+      REWARDS_SERVICE_URL: "http://rewards-service:8000"
+      POSTCONSULT_SERVICE_URL: "http://postconsult-service:8000"
     depends_on:
       - auth-service
       - pets-service
       - appointment-service
       - rewards-service
+      - postconsult-service
     restart: always
     networks:
       - backend
 
-  # === WEB CLIENT (React con Nginx) ===
+  # === WEB CLIENT ===
   client:
     build: ./clients/web-client
     container_name: web_client
     ports:
-      - "80:80"   # ✅ puerto público para producción
+      - "80:80"
     depends_on:
       - api-gateway
     environment:
@@ -108,3 +125,4 @@ volumes:
   pets_data:
   appointments_data:
   rewards_data:
+  postconsult_data:

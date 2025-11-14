@@ -50,6 +50,16 @@ async def appointments_proxy(path: str, request: Request):
     """Proxy para el servicio de citas"""
     return await forward_request(request, APPOINTMENTS_SERVICE_URL, f"/{path}")
 
+@app.api_route("/postconsult/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+async def postconsult_proxy(path: str, request: Request):
+    """Proxy para el servicio de postconsultas"""
+    return await forward_request(request, POSTCONSULT_SERVICE_URL, f"/{path}")
+
+@app.api_route("/rewards/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+async def rewards_proxy(path: str, request: Request):
+    """Proxy para el servicio de recompensas"""
+    return await forward_request(request, REWARDS_SERVICE_URL, f"/{path}")
+
 # ======================================
 # 🔹 Endpoint raíz (salud del gateway)
 # ======================================
