@@ -76,10 +76,7 @@ services:
 
   # === WEB CLIENT ===
   client:
-    build:
-      context: ./clients/web-client
-      args:
-        - VITE_API_GATEWAY=${VITE_API_GATEWAY}
+    build: ./clients/web-client
     container_name: web_client
     ports:
       - "80:80"
@@ -87,7 +84,7 @@ services:
       - ./clients/web-client/.env
     restart: always
     networks:
-    - backend
+      - backend
 
 # === NETWORKS ===
 networks:

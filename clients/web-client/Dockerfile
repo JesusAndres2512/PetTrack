@@ -1,21 +1,18 @@
 # =============================
-# Etapa 1: Build del frontend
+# Etapa 1: Construcción del proyecto
 # =============================
 FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Recibir variables que vienen desde Azure
-ARG VITE_API_GATEWAY
-ENV VITE_API_GATEWAY=${VITE_API_GATEWAY}
-
+# Copiar e instalar dependencias (con cache inteligente)
 COPY package*.json ./
 RUN npm ci --silent
 
+# Copiar el resto del código
 COPY . .
 
-# Confirmar variable antes del build (debug opcional)
-RUN echo ">>> VITE_API_GATEWAY durante build: $VITE_API_GATEWAY"
+# Compilar el proyecto para producción
 RUN npm run build
 
 # =============================
@@ -23,11 +20,16 @@ RUN npm run build
 # =============================
 FROM nginx:1.25-alpine
 
+# Elimina archivos por defecto de Nginx
 RUN rm -rf /usr/share/nginx/html/*
 
+# Copiar los archivos generados en la etapa de build
 COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copiar configuración personalizada de Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
+# Comando de inicio
 CMD ["nginx", "-g", "daemon off;"]

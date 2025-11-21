@@ -1,43 +1,34 @@
 # =========================
-# Dockerfile - Auth Service con RSA256
+# Dockerfile - Auth Service
 # =========================
 
 FROM python:3.11-slim
 
+# 1️⃣ Variables de entorno
 ENV PYTHONUNBUFFERED=1
 
+# 2️⃣ Directorio de trabajo
 WORKDIR /app
 
-# Dependencias necesarias para OpenSSL
+# 3️⃣ Instalar dependencias del sistema necesarias para SSL
 RUN apt-get update \
-    && apt-get install -y openssl ca-certificates wget \
+    && apt-get install -y ca-certificates wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar dependencias Python
+# 4️⃣ Copiar requirements e instalar dependencias Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código de la app
+# 5️⃣ Copiar el código de la app
 COPY ./app ./app
 
-# Certificado DigiCert
+# 6️⃣ Copiar certificado DigiCert (desde ./certs/)
+# En CI/CD, este archivo se crea dinámicamente desde secret antes del build
 COPY ./certs/DigiCertGlobalRootG2.crt.pem /usr/local/share/ca-certificates/DigiCertGlobalRootG2.crt
 RUN update-ca-certificates
 
-# Crear directorio de claves
-RUN mkdir -p /app/keys
-
-# Generar claves RSA solo si no existen
-RUN if [ ! -f /app/keys/private.pem ]; then \
-        echo "🔐 Generando claves RSA256..." && \
-        openssl genrsa -out /app/keys/private.pem 2048 && \
-        openssl rsa -in /app/keys/private.pem -pubout -out /app/keys/public.pem && \
-        chmod 600 /app/keys/private.pem && \
-        chmod 644 /app/keys/public.pem ; \
-    else \
-        echo "🔐 Claves RSA ya existen, no se regeneran."; \
-    fi
-
+# 7️⃣ Puerto expuesto
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 8️⃣ Comando por defecto
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

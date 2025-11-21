@@ -1,16 +1,15 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_GATEWAY
-  ? `${import.meta.env.VITE_API_GATEWAY}/auth`
-  : "https://api-gateway-apppettrack.azure-api.net/auth";
+const API_BASE = import.meta.env.VITE_API_GATEWAY;
 
 const apiClient = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
-  withCredentials: false, // API Management NO usa cookies
 });
 
-// ===== JWT =====
+// =============================
+// 🔒 Interceptor JWT
+// =============================
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -20,77 +19,137 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ===== Manejo de 401 =====
+// =============================
+// ⚠️ Interceptor de Respuesta
+// =============================
 apiClient.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
-    return Promise.reject(err);
+    return Promise.reject(error);
   }
 );
 
-// ===== AUTH =====
+// =============================
+// 🧩 AUTENTICACIÓN
+// =============================
 export const login = async (username, password) => {
-  const { data } = await apiClient.post("/login", { username, password });
-  if (data.access_token) localStorage.setItem("token", data.access_token);
-  return data;
+  try {
+    const { data } = await apiClient.post("/auth/login", { username, password });
+    if (data.access_token) localStorage.setItem("token", data.access_token);
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al iniciar sesión" };
+  }
 };
 
-export const register = async (payload) => {
-  const { data } = await apiClient.post("/register", payload);
-  return data;
+export const register = async ({ username, email, password, role }) => {
+  try {
+    const { data } = await apiClient.post("/auth/register", {
+      username,
+      email,
+      password,
+      role,
+    });
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al registrar usuario" };
+  }
 };
 
 export const getProfile = async () => {
-  const { data } = await apiClient.get("/profile");
-  return data;
+  try {
+    const { data } = await apiClient.get("/auth/profile");
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al obtener perfil" };
+  }
 };
 
-// ===== USERS =====
 export const getUsers = async () => {
-  const { data } = await apiClient.get("/users");
-  return data;
+  try {
+    const { data } = await apiClient.get("/auth/users");
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al obtener usuarios" };
+  }
 };
 
+// 🧑‍💼 Eliminar usuario (solo admin)
 export const deleteUser = async (userId) => {
-  const { data } = await apiClient.delete(`/users/${userId}`);
-  return data;
+  try {
+    const { data } = await apiClient.delete(`/auth/users/${userId}`);
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al eliminar usuario" };
+  }
 };
 
+// ✏️ Actualizar usuario (solo admin)
 export const updateUser = async (userId, updatedData) => {
-  const { data } = await apiClient.put(`/users/${userId}`, updatedData);
-  return data;
+  try {
+    const { data } = await apiClient.put(`/auth/users/${userId}`, updatedData);
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al actualizar usuario" };
+  }
 };
 
-// ===== PETS =====
+// =============================
+// 🐶 MASCOTAS
+// =============================
 export const getPets = async () => {
-  const { data } = await apiClient.get("/pets");
-  return data;
+  try {
+    const { data } = await apiClient.get("/pets");
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al obtener mascotas" };
+  }
 };
 
 export const addPet = async (petData) => {
-  const { data } = await apiClient.post("/pets", petData);
-  return data;
+  try {
+    const { data } = await apiClient.post("/pets", petData);
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al agregar mascota" };
+  }
 };
 
-// ===== APPOINTMENTS =====
+// =============================
+// 📅 CITAS
+// =============================
 export const getAppointments = async () => {
-  const { data } = await apiClient.get("/appointments");
-  return data;
+  try {
+    const { data } = await apiClient.get("/appointments");
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al obtener citas" };
+  }
 };
 
 export const addAppointment = async (appointmentData) => {
-  const { data } = await apiClient.post("/appointments", appointmentData);
-  return data;
+  try {
+    const { data } = await apiClient.post("/appointments", appointmentData);
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al crear cita" };
+  }
 };
 
-// ===== DASHBOARD =====
+// =============================
+// 📊 DASHBOARD
+// =============================
 export const getDashboard = async () => {
-  const { data } = await apiClient.get("/dashboard");
-  return data;
+  try {
+    const { data } = await apiClient.get("/dashboard");
+    return data;
+  } catch (error) {
+    throw error.response?.data || { detail: "Error al obtener datos del dashboard" };
+  }
 };
 
 export default apiClient;

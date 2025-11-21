@@ -1,7 +1,6 @@
 // src/router/AppRouter.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Debug from "../pages/Debug";
 import LoginView from "../pages/auth/LoginView.jsx";
 import RegisterView from "../pages/auth/RegisterView.jsx";
 
@@ -30,8 +29,6 @@ import ViewAppointments from "../pages/ViewAppointments.jsx";
 // ProtectedRoute
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import RewardsUsers from "../pages/RewardsUsers.jsx";
-
-
 
 export default function AppRouter() {
   return (
@@ -69,9 +66,6 @@ export default function AppRouter() {
         <Route path="/admin/pets" element={<ViewPets />} />
         <Route path="/admin/appointments" element={<ViewAppointments />} />
       </Route>
-
-      {/* Debug Vite env */}
-      <Route path="/debug" element={<Debug />} />
 
       {/* Página no encontrada */}
       <Route
