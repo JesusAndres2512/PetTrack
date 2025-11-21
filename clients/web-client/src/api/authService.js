@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // URL base del API Gateway
-const API_URL = import.meta.env.VITE_API_GATEWAY;
+const API_URL = import.meta.env.VITE_API_GATEWAY + "/auth";
 
 // Instancia de Axios para centralizar configuración
 const api = axios.create({
