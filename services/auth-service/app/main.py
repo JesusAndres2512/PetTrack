@@ -77,20 +77,29 @@ def health_check():
 @app.post("/login")
 def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == credentials.username).first()
+    
     if not user or not pwd_context.verify(credentials.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
     access_token = create_access_token(
-        data={"sub": user.email, "role": user.role},
+        data={
+            "sub": user.email,
+            "role": user.role,
+            "iss": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
+            "aud": "https://web-client-apppettrack-f2hncfaeg9apdzfb.canadacentral-01.azurewebsites.net/"
+        },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user_id": user.id,
+        "username": user.username,
         "email": user.email,
         "role": user.role
     }
+
 
 @app.get("/profile", response_model=schemas.UserResponse)
 def get_profile(current_user: models.User = Depends(get_current_user)):
