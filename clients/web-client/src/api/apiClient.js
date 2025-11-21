@@ -41,13 +41,13 @@ apiClient.interceptors.response.use(
 // 🧩 AUTENTICACIÓN
 // =============================
 export const login = async (username, password) => {
-  const { data } = await apiClient.post("/auth/login", { username, password });
+  const { data } = await apiClient.post("/login", { username, password });
   if (data.access_token) localStorage.setItem("token", data.access_token);
   return data;
 };
 
 export const register = async ({ username, email, password, role }) => {
-  const { data } = await apiClient.post("/auth/register", {
+  const { data } = await apiClient.post("/register", {
     username,
     email,
     password,
@@ -57,22 +57,22 @@ export const register = async ({ username, email, password, role }) => {
 };
 
 export const getProfile = async () => {
-  const { data } = await apiClient.get("/auth/profile");
+  const { data } = await apiClient.get("/profile");
   return data;
 };
 
 export const getUsers = async () => {
-  const { data } = await apiClient.get("/auth/users");
+  const { data } = await apiClient.get("/users");
   return data;
 };
 
 export const deleteUser = async (userId) => {
-  const { data } = await apiClient.delete(`/auth/users/${userId}`);
+  const { data } = await apiClient.delete(`/users/${userId}`);
   return data;
 };
 
 export const updateUser = async (userId, updatedData) => {
-  const { data } = await apiClient.put(`/auth/users/${userId}`, updatedData);
+  const { data } = await apiClient.put(`/users/${userId}`, updatedData);
   return data;
 };
 
