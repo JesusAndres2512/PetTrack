@@ -13,16 +13,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 1️⃣ Checkout code
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 🔐 Login a Azure usando Service Principal
+    # 2️⃣ Crear certificado desde secret (evita subirlo al repo)
+    - name: Crear certificado DigiCert
+      run: |
+        mkdir -p ./services/auth-service/certs
+        echo "${{ secrets.DIGICERT_PEM }}" > ./services/auth-service/certs/DigiCertGlobalRootG2.crt.pem
+
+    # 3️⃣ Login a Azure usando Service Principal
     - name: Azure login
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    # 🐳 Login al ACR usando los secrets
+    # 4️⃣ Login al ACR
     - name: Docker login to ACR
       uses: azure/docker-login@v1
       with:
@@ -30,11 +37,10 @@ jobs:
         username: ${{ secrets.ACR_USERNAME }}
         password: ${{ secrets.ACR_PASSWORD }}
 
-    # 🏗️ Build sin caché + tags
+    # 5️⃣ Build y tag de Docker images
     - name: Build and tag Docker images
       run: |
         REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}
-
         echo "Construyendo imágenes..."
 
         docker build --no-cache -t $REGISTRY/pettrack-auth-service:${{ env.TAG }} ./services/auth-service
@@ -44,7 +50,7 @@ jobs:
         docker build --no-cache -t $REGISTRY/pettrack-postconsult-service:${{ env.TAG }} ./services/postconsult-service
         docker build --no-cache -t $REGISTRY/pettrack-web-client:${{ env.TAG }} ./clients/web-client
 
-        # Etiquetas adicionales
+        # Etiquetas con commit SHA
         docker tag $REGISTRY/pettrack-auth-service:${{ env.TAG }} $REGISTRY/pettrack-auth-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-pets-service:${{ env.TAG }} $REGISTRY/pettrack-pets-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-appointment-service:${{ env.TAG }} $REGISTRY/pettrack-appointment-service:${{ env.COMMIT_TAG }}
@@ -52,7 +58,7 @@ jobs:
         docker tag $REGISTRY/pettrack-postconsult-service:${{ env.TAG }} $REGISTRY/pettrack-postconsult-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-web-client:${{ env.TAG }} $REGISTRY/pettrack-web-client:${{ env.COMMIT_TAG }}
 
-    # 📦 Push
+    # 6️⃣ Push de las imágenes a ACR
     - name: Push images to ACR
       run: |
         REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}
