@@ -13,6 +13,7 @@ RUN npm ci --silent
 COPY . .
 
 # Compilar el proyecto para producción
+RUN rm -rf dist
 RUN npm run build
 
 # =============================
