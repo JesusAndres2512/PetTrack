@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // URL base del API Gateway
-const API_URL = import.meta.env.VITE_API_GATEWAY;
+const API_URL = "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net";
 
 // Instancia de Axios para centralizar configuración
 const api = axios.create({
@@ -13,7 +13,7 @@ const api = axios.create({
 // Login de usuario
 export const login = async (data) => {
   try {
-    const res = await api.post("/auth/login", data);
+    const res = await api.post("/login", data);
     return res.data;
   } catch (error) {
     throw error.response?.data || { message: "Error al iniciar sesión" };
@@ -23,7 +23,7 @@ export const login = async (data) => {
 // Registro de usuario
 export const register = async (data) => {
   try {
-    const res = await api.post("/auth/register", data);
+    const res = await api.post("/register", data);
     return res.data;
   } catch (error) {
     throw error.response?.data || { message: "Error al registrar usuario" };
@@ -33,7 +33,7 @@ export const register = async (data) => {
 // Obtener usuarios (ruta que debe existir en el Auth-Service)
 export const getUsers = async () => {
   try {
-    const res = await api.get("/auth/users");
+    const res = await api.get("/users");
     return res.data;
   } catch (error) {
     throw error.response?.data || { message: "Error al obtener usuarios" };
