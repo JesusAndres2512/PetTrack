@@ -86,7 +86,7 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
             "sub": user.email,
             "role": user.role,
             "iss": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
-            "aud": "https://web-client-apppettrack-f2hncfaeg9apdzfb.canadacentral-01.azurewebsites.net/"
+            "aud": "https://api-gateway-apppettrack.azure-api.net/auth/"
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
