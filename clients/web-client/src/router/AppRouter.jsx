@@ -1,7 +1,7 @@
 // src/router/AppRouter.jsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Debug from "./pages/Debug";
+import Debug from "../pages/Debug";
 import LoginView from "../pages/auth/LoginView.jsx";
 import RegisterView from "../pages/auth/RegisterView.jsx";
 
@@ -72,7 +72,7 @@ export default function AppRouter() {
 
       {/* Debug Vite env */}
       <Route path="/debug" element={<Debug />} />
-      
+
       {/* Página no encontrada */}
       <Route
         path="*"
