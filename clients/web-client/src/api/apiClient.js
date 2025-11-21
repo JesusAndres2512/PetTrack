@@ -1,14 +1,20 @@
+// clients/web-client/src/api/apiClient.js
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_GATEWAY + "/auth" || "https://api-gateway-apppettrack.azure-api.net/auth";
+// =============================
+// 🌐 BASE URL (API Gateway)
+// =============================
+const API_BASE =
+  (import.meta.env.VITE_API_GATEWAY + "/auth") ||
+  "https://api-gateway-apppettrack.azure-api.net/auth";
 
 // =============================
-// 🔧 Instancia Axios
+// 🔧 Instancia única Axios
 // =============================
 const apiClient = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true, // si usas cookies desde el Auth service
+  withCredentials: true, 
 });
 
 // =============================
@@ -24,7 +30,7 @@ apiClient.interceptors.request.use(
 );
 
 // =============================
-// ⚠️ Interceptor de Respuesta
+// ⚠️ Interceptor 401
 // =============================
 apiClient.interceptors.response.use(
   (response) => response,
@@ -38,7 +44,7 @@ apiClient.interceptors.response.use(
 );
 
 // =============================
-// 🧩 AUTENTICACIÓN
+// 🧩 AUTH
 // =============================
 export const login = async (username, password) => {
   const { data } = await apiClient.post("/login", { username, password });
@@ -61,6 +67,9 @@ export const getProfile = async () => {
   return data;
 };
 
+// =============================
+// 👥 USERS
+// =============================
 export const getUsers = async () => {
   const { data } = await apiClient.get("/users");
   return data;
@@ -77,7 +86,7 @@ export const updateUser = async (userId, updatedData) => {
 };
 
 // =============================
-// 🐶 MASCOTAS
+// 🐶 PETS
 // =============================
 export const getPets = async () => {
   const { data } = await apiClient.get("/pets");
@@ -90,7 +99,7 @@ export const addPet = async (petData) => {
 };
 
 // =============================
-// 📅 CITAS
+// 📅 APPOINTMENTS
 // =============================
 export const getAppointments = async () => {
   const { data } = await apiClient.get("/appointments");
@@ -110,4 +119,5 @@ export const getDashboard = async () => {
   return data;
 };
 
+// =============================
 export default apiClient;
