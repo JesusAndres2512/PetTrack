@@ -23,6 +23,15 @@ jobs:
         mkdir -p ./services/auth-service/certs
         echo "${{ secrets.AZURE_CA_CERT }}" > ./services/auth-service/certs/DigiCertGlobalRootG2.crt.pem
 
+        mkdir -p ./services/pets-service/certs
+        echo "${{ secrets.AZURE_CA_CERT }}" > ./services/pets-service/certs/DigiCertGlobalRootG2.crt.pem
+        
+        mkdir -p ./services/appointment-service/certs
+        echo "${{ secrets.AZURE_CA_CERT }}" > ./services/appointment-service/certs/DigiCertGlobalRootG2.crt.pem
+
+        mkdir -p ./services/postconsult-service/certs
+        echo "${{ secrets.AZURE_CA_CERT }}" > ./services/rewards-service/certs/DigiCertGlobalRootG2.crt.pem
+
     # 3️⃣ Login a Azure usando Service Principal
     - name: Azure login
       uses: azure/login@v1
