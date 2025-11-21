@@ -4,9 +4,11 @@ import axios from "axios";
 // =============================
 // 🌐 BASE URL (API Gateway)
 // =============================
-const API_BASE =
-  (import.meta.env.VITE_API_GATEWAY + "/auth") ||
-  "https://api-gateway-apppettrack.azure-api.net/auth";
+const API_BASE = import.meta.env.VITE_API_GATEWAY
+  ? `${import.meta.env.VITE_API_GATEWAY}/auth`
+  : "https://api-gateway-apppettrack.azure-api.net/auth";
+  console.log("API_BASE =", API_BASE);
+
 
 // =============================
 // 🔧 Instancia única Axios
