@@ -12,99 +12,107 @@ from .config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Auth Service")
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
-# --- Funciones de seguridad ---
+# ===== JWT =====
 def create_access_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
-        user = db.query(models.User).filter(models.User.email == email).first()
-        if user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no encontrado")
-        return user
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expirado")
-    except jwt.JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+            audience="https://api-gateway-apppettrack.azure-api.net/",
+            issuer="https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/"
+        )
 
-# --- Decorador de roles ---
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(status_code=401, detail="Token inválido")
+
+        user = db.query(models.User).filter(models.User.email == email).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="Usuario no encontrado")
+
+        return user
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
+
+# ===== Decorador de roles =====
 def role_required(allowed_roles: List[str]):
     def wrapper(user: models.User = Depends(get_current_user)):
         if user.role not in allowed_roles:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes permisos para esta acción")
+            raise HTTPException(status_code=403, detail="No tienes permisos")
         return user
     return wrapper
 
-# --- Endpoints ---
+# ===== REGISTER =====
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+
     if db.query(models.User).filter(models.User.email == user.email).first():
-        raise HTTPException(status_code=400, detail="El email ya está en uso")
-    
-    if user.role not in ["user", "doctor", "admin"]:
-        raise HTTPException(status_code=400, detail="Rol no válido")
-    
-    if len(user.password) > 72:
-        raise HTTPException(status_code=400, detail="La contraseña no puede superar 72 caracteres")
+        raise HTTPException(status_code=400, detail="Email ya registrado")
 
     hashed_pw = pwd_context.hash(user.password)
+
     new_user = models.User(
         username=user.username,
         email=user.email,
         role=user.role,
         hashed_password=hashed_pw
     )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return new_user
 
-@app.get("/health")
-def health_check():
-    return {"status": "Auth Service is healthy"}
 
+# ===== LOGIN =====
 @app.post("/login")
 def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == credentials.username).first()
-    
+
     if not user or not pwd_context.verify(credentials.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
-    access_token = create_access_token(
+    token = create_access_token(
         data={
             "sub": user.email,
             "role": user.role,
             "iss": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
-            "aud": "https://api-gateway-apppettrack.azure-api.net/auth/"
+            "aud": "https://api-gateway-apppettrack.azure-api.net/"
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
     return {
-        "access_token": access_token,
+        "access_token": token,
         "token_type": "bearer",
         "user_id": user.id,
-        "username": user.username,
         "email": user.email,
         "role": user.role
     }
 
-
+# ===== PROFILE =====
 @app.get("/profile", response_model=schemas.UserResponse)
-def get_profile(current_user: models.User = Depends(get_current_user)):
-    return current_user
+def profile(user: models.User = Depends(get_current_user)):
+    return user
 
+# ======================================
+# 🔹 Listar usuarios (solo admin y doctor)
+# ======================================
 @app.get("/users", response_model=List[schemas.UserResponse])
 def list_users(current_user: models.User = Depends(role_required(["admin", "doctor"])), db: Session = Depends(get_db)):
     users = db.query(models.User).all()

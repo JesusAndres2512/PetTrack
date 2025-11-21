@@ -1,27 +1,17 @@
 // clients/web-client/src/api/apiClient.js
 import axios from "axios";
 
-// =============================
-// 🌐 BASE URL (API Gateway)
-// =============================
 const API_BASE = import.meta.env.VITE_API_GATEWAY
   ? `${import.meta.env.VITE_API_GATEWAY}/auth`
   : "https://api-gateway-apppettrack.azure-api.net/auth";
-  console.log("API_BASE =", API_BASE);
 
-
-// =============================
-// 🔧 Instancia única Axios
-// =============================
 const apiClient = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true, 
+  withCredentials: false, // ⚠️ API Management NO usa cookies
 });
 
-// =============================
-// 🔒 Interceptor JWT
-// =============================
+// ===== Agregar Authorization =====
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -31,36 +21,27 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// =============================
-// ⚠️ Interceptor 401
-// =============================
+// ===== Manejo de 401 =====
 apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 
-// =============================
-// 🧩 AUTH
-// =============================
+// ===== AUTH =====
 export const login = async (username, password) => {
   const { data } = await apiClient.post("/login", { username, password });
   if (data.access_token) localStorage.setItem("token", data.access_token);
   return data;
 };
 
-export const register = async ({ username, email, password, role }) => {
-  const { data } = await apiClient.post("/register", {
-    username,
-    email,
-    password,
-    role,
-  });
+export const register = async (payload) => {
+  const { data } = await apiClient.post("/register", payload);
   return data;
 };
 
@@ -68,6 +49,7 @@ export const getProfile = async () => {
   const { data } = await apiClient.get("/profile");
   return data;
 };
+
 
 // =============================
 // 👥 USERS
