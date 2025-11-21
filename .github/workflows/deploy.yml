@@ -17,7 +17,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 2️⃣ Crear certificado desde secret (evita subirlo al repo)
+    # 2️⃣ Crear certificado desde secret
     - name: Crear certificado DigiCert
       run: |
         mkdir -p ./services/auth-service/certs
@@ -32,7 +32,7 @@ jobs:
         mkdir -p ./services/postconsult-service/certs
         echo "${{ secrets.AZURE_CA_CERT }}" > ./services/postconsult-service/certs/DigiCertGlobalRootG2.crt.pem
 
-    # 3️⃣ Login a Azure usando Service Principal
+    # 3️⃣ Login a Azure
     - name: Azure login
       uses: azure/login@v1
       with:
@@ -46,7 +46,7 @@ jobs:
         username: ${{ secrets.ACR_USERNAME }}
         password: ${{ secrets.ACR_PASSWORD }}
 
-    # 5️⃣ Build y tag de Docker images
+    # 5️⃣ Build y tag de imágenes
     - name: Build and tag Docker images
       run: |
         REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}
@@ -57,7 +57,14 @@ jobs:
         docker build --no-cache -t $REGISTRY/pettrack-appointment-service:${{ env.TAG }} ./services/appointment-service
         docker build --no-cache -t $REGISTRY/pettrack-rewards-service:${{ env.TAG }} ./services/rewards-service
         docker build --no-cache -t $REGISTRY/pettrack-postconsult-service:${{ env.TAG }} ./services/postconsult-service
-        docker build --no-cache -t $REGISTRY/pettrack-web-client:${{ env.TAG }} ./clients/web-client
+
+        # ⬇️ ⬇️ AQUI VA TU CAMBIO (build con ARG)
+        docker build \
+          --build-arg VITE_API_GATEWAY=${{ secrets.VITE_API_GATEWAY }} \
+          --no-cache \
+          -t $REGISTRY/pettrack-web-client:${{ env.TAG }} \
+          ./clients/web-client
+        # ⬆️ ⬆️ FIN DEL CAMBIO
 
         # Etiquetas con commit SHA
         docker tag $REGISTRY/pettrack-auth-service:${{ env.TAG }} $REGISTRY/pettrack-auth-service:${{ env.COMMIT_TAG }}
@@ -67,7 +74,7 @@ jobs:
         docker tag $REGISTRY/pettrack-postconsult-service:${{ env.TAG }} $REGISTRY/pettrack-postconsult-service:${{ env.COMMIT_TAG }}
         docker tag $REGISTRY/pettrack-web-client:${{ env.TAG }} $REGISTRY/pettrack-web-client:${{ env.COMMIT_TAG }}
 
-    # 6️⃣ Push de las imágenes a ACR
+    # 6️⃣ Push a ACR
     - name: Push images to ACR
       run: |
         REGISTRY=${{ secrets.ACR_LOGIN_SERVER }}

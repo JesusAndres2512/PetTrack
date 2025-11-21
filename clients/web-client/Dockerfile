@@ -15,8 +15,7 @@ RUN npm ci --silent
 COPY . .
 
 # Confirmar variable antes del build (debug opcional)
-RUN echo "Usando VITE_API_GATEWAY = $VITE_API_GATEWAY"
-
+RUN echo ">>> VITE_API_GATEWAY durante build: $VITE_API_GATEWAY"
 RUN npm run build
 
 # =============================
