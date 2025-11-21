@@ -1,4 +1,12 @@
-{
-  "issuer": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
-  "jwks_uri": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/jwks"
-}
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/.well-known/openid-configuration")
+def openid_config():
+    return {
+        "issuer": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
+        "jwks_uri": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/jwks.json",
+        "token_endpoint": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/login",
+        "id_token_signing_alg_values_supported": ["RS256"]
+    }
