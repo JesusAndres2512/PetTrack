@@ -30,7 +30,7 @@ jobs:
         echo "${{ secrets.AZURE_CA_CERT }}" > ./services/appointment-service/certs/DigiCertGlobalRootG2.crt.pem
 
         mkdir -p ./services/postconsult-service/certs
-        echo "${{ secrets.AZURE_CA_CERT }}" > ./services/rewards-service/certs/DigiCertGlobalRootG2.crt.pem
+        echo "${{ secrets.AZURE_CA_CERT }}" > ./services/postconsult-service/certs/DigiCertGlobalRootG2.crt.pem
 
     # 3️⃣ Login a Azure usando Service Principal
     - name: Azure login
