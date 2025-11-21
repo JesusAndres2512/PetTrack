@@ -86,8 +86,8 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
             "sub": user.email,
             "role": user.role,
             "iss": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
-            "audi": [
-                "https://api-gateway-apppettrack.azure-api.net/"
+            "aud": [
+                "https://api-gateway-apppettrack.azure-api.net/",
                 "https://api-gateway-apppettrack.azure-api.net/auth/",
                 "https://api-gateway-apppettrack.azure-api.net/profile/"
             ]
