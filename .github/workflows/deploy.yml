@@ -21,7 +21,7 @@ jobs:
     - name: Crear certificado DigiCert
       run: |
         mkdir -p ./services/auth-service/certs
-        echo "${{ secrets.DIGICERT_PEM }}" > ./services/auth-service/certs/DigiCertGlobalRootG2.crt.pem
+        echo "${{ secrets.AZURE_CA_CERT }}" > ./services/auth-service/certs/DigiCertGlobalRootG2.crt.pem
 
     # 3️⃣ Login a Azure usando Service Principal
     - name: Azure login
