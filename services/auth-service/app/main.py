@@ -10,16 +10,44 @@ from fastapi.responses import JSONResponse
 from jwt.utils import base64url_encode
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
+import logging
+import os
 
 from . import models, schemas
 from .database import Base, engine, get_db
 from .config import PRIVATE_KEY, PUBLIC_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+
+# bootstrap
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("auth-service")
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Auth Service")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+
+# Helper: convertir PEM -> numbers n,e para JWK
+def public_pem_to_jwk(pem_str, kid="auth-rsa-key"):
+    try:
+        public_key_obj = serialization.load_pem_public_key(
+            pem_str.encode(),
+            backend=default_backend()
+        )
+        numbers = public_key_obj.public_numbers()
+        n = base64url_encode(numbers.n.to_bytes((numbers.n.bit_length() + 7) // 8, 'big')).decode()
+        e = base64url_encode(numbers.e.to_bytes((numbers.e.bit_length() + 7) // 8, 'big')).decode()
+        return {
+            "kty": "RSA",
+            "use": "sig",
+            "alg": ALGORITHM,
+            "kid": kid,
+            "n": n,
+            "e": e
+        }
+    except Exception as exc:
+        logger.exception("Error convirtiendo clave pública a JWK: %s", exc)
+        raise
 
 # ==========================
 # 🔐 JWT (RSA256)
@@ -28,13 +56,12 @@ def create_access_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
-
+    # PRIVATE_KEY must be PEM (PKCS#1 or PKCS#8)
     return jwt.encode(
         to_encode,
         PRIVATE_KEY,
         algorithm=ALGORITHM
     )
-
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
@@ -58,9 +85,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        logger.info("Token inválido: %s", e)
         raise HTTPException(status_code=401, detail="Token inválido")
-
 
 # ==========================
 # 🧩 Roles
@@ -72,36 +99,26 @@ def role_required(allowed_roles: List[str]):
         return user
     return wrapper
 
-# ==========================
-# 🔹 Register
-# ==========================
+# Endpoints (register/login/profile/users/dashboard/delete/update) - igual que antes
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email ya registrado")
-
     hashed_pw = pwd_context.hash(user.password)
-
     new_user = models.User(
         username=user.username,
         email=user.email,
         role=user.role,
         hashed_password=hashed_pw
     )
-
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return new_user
 
-
-# ==========================
-# 🔹 Login
-# ==========================
 @app.post("/login")
 def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == credentials.username).first()
-
     if not user or not pwd_context.verify(credentials.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
@@ -123,55 +140,36 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
         "role": user.role
     }
 
-# ==========================
-# 🔹 Profile
-# ==========================
 @app.get("/profile", response_model=schemas.UserResponse)
 def profile(user: models.User = Depends(get_current_user)):
     return user
 
-# ==========================
-# 🔹 Users
-# ==========================
 @app.get("/users", response_model=List[schemas.UserResponse])
 def list_users(current_user: models.User = Depends(role_required(["admin", "doctor"])), db: Session = Depends(get_db)):
     return db.query(models.User).all()
 
-# ==========================
-# 🔹 Dashboard
-# ==========================
 @app.get("/dashboard/{role}")
 def dashboard(role: str, current_user: models.User = Depends(get_current_user)):
     if role != current_user.role:
         raise HTTPException(status_code=403)
-
     return {"message": f"Bienvenido al dashboard de {role}, {current_user.username}"}
 
-# ==========================
-# 🔹 Delete user
-# ==========================
 @app.delete("/users/{user_id}", status_code=204)
 def delete_user(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(role_required(["admin"]))):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Usuario no encontrado")
-
     db.delete(user)
     db.commit()
     return {"message": f"Usuario con ID {user_id} eliminado"}
 
-# ==========================
-# 🔹 Update user
-# ==========================
 @app.put("/users/{user_id}", response_model=schemas.UserResponse)
 def update_user(user_id: int, updated_data: schemas.UserUpdate,
                 db: Session = Depends(get_db),
                 current_user: models.User = Depends(role_required(["admin"]))):
-
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Usuario no encontrado")
-
     if updated_data.username:
         user.username = updated_data.username
     if updated_data.email:
@@ -180,54 +178,45 @@ def update_user(user_id: int, updated_data: schemas.UserUpdate,
         user.role = updated_data.role
     if updated_data.password:
         user.hashed_password = pwd_context.hash(updated_data.password)
-
     db.commit()
     db.refresh(user)
     return user
 
-# Convertir clave pública RSA → JWK
+# ==========================
+# Convertir clave pública RSA → JWK (managing errors)
 def load_jwk():
-    public_key_obj = serialization.load_pem_public_key(
-        PUBLIC_KEY.encode(),
-        backend=default_backend()
-    )
-
-    numbers = public_key_obj.public_numbers()
-
-    n = base64url_encode(numbers.n.to_bytes((numbers.n.bit_length() + 7) // 8, 'big')).decode()
-    e = base64url_encode(numbers.e.to_bytes((numbers.e.bit_length() + 7) // 8, 'big')).decode()
-
-    return {
-        "keys": [
-            {
-                "kty": "RSA",
-                "use": "sig",
-                "alg": "RS256",
-                "kid": "auth-rsa-key",
-                "n": n,
-                "e": e
-            }
-        ]
-    }
-
+    try:
+        return {"keys": [public_pem_to_jwk(PUBLIC_KEY)]}
+    except Exception as exc:
+        logger.exception("Failed to load JWK: %s", exc)
+        raise HTTPException(status_code=500, detail="Error interno generando JWKS")
 
 @app.get("/.well-known/jwks.json")
 def jwks():
-    return JSONResponse(load_jwk())
-
+    jwk_data = load_jwk()
+    return JSONResponse(jwk_data)
 
 @app.get("/.well-known/openid-configuration")
 def openid_config():
     base = "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net"
     return {
-        "issuer": base,
+        "issuer": base + "/",
         "jwks_uri": f"{base}/.well-known/jwks.json",
         "authorization_endpoint": f"{base}/login",
-        "token_endpoint": f"{base}/login"
+        "token_endpoint": f"{base}/login",
+        "id_token_signing_alg_values_supported": [ALGORITHM]
     }
 
 # ==========================
-# 🔹 Health Check
+# Health Check
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+# Startup check: log and fail fast if keys missing (helps diagnóstico en Azure)
+@app.on_event("startup")
+def startup_checks():
+    logger.info("Auth service starting up. ALGORITHM=%s", ALGORITHM)
+    if not PRIVATE_KEY or not PUBLIC_KEY:
+        logger.error("PRIVATE_KEY or PUBLIC_KEY vacíos. Revisar rutas/variables de entorno.")
+        # no raise here to allow app to start and return error messages from endpoints
