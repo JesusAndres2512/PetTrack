@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_GATEWAY + "/auth";
+const API_BASE = import.meta.env.VITE_API_GATEWAY ;
 
 // =============================
 // 🔧 Instancia Axios
