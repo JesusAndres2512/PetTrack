@@ -1,19 +1,24 @@
 # =============================
-# Etapa 1: Construcción del proyecto
+# Etapa 1: Build
 # =============================
 FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copiar e instalar dependencias (con cache inteligente)
+# Recibimos la variable desde Azure como ARG
+ARG VITE_API_GATEWAY
+
+# La exponemos dentro del entorno de build
+ENV VITE_API_GATEWAY=$VITE_API_GATEWAY
+
+# Instalamos dependencias
 COPY package*.json ./
 RUN npm ci --silent
 
-# Copiar el resto del código
+# Copiamos todo el código
 COPY . .
 
-# Compilar el proyecto para producción
-RUN rm -rf dist
+# 🔥 Durante el build, Vite leerá VITE_API_GATEWAY correctamente
 RUN npm run build
 
 # =============================
@@ -21,16 +26,15 @@ RUN npm run build
 # =============================
 FROM nginx:1.25-alpine
 
-# Elimina archivos por defecto de Nginx
+# Borramos archivos default de nginx
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copiar los archivos generados en la etapa de build
+# Copiamos el build generado
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copiar configuración personalizada de Nginx
+# Config de nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
-# Comando de inicio
 CMD ["nginx", "-g", "daemon off;"]
