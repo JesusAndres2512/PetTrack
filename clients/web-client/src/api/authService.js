@@ -1,18 +1,41 @@
 // src/services/authService.js
 import axios from "axios";
 
-// URL base del servicio de autenticación (Auth Service)
+// URL base del API Gateway
 const API_URL = import.meta.env.VITE_API_GATEWAY;
 
-// Todas las rutas del Auth-Service deben comenzar con el prefijo /auth
-export const login = async (data) => (
-  await axios.post(`${API_URL}/auth/login`, data)
-).data;
+// Instancia de Axios para centralizar configuración
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true, // útil si usas cookies JWT
+});
 
-export const register = async (data) => (
-  await axios.post(`${API_URL}/auth/register`, data)
-).data;
+// Login de usuario
+export const login = async (data) => {
+  try {
+    const res = await api.post("/auth/login", data);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || { message: "Error al iniciar sesión" };
+  }
+};
 
-export const getUsers = async () => (
-  await axios.get(`${API_URL}/auth/users`)
-).data; 
+// Registro de usuario
+export const register = async (data) => {
+  try {
+    const res = await api.post("/auth/register", data);
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || { message: "Error al registrar usuario" };
+  }
+};
+
+// Obtener usuarios (ruta que debe existir en el Auth-Service)
+export const getUsers = async () => {
+  try {
+    const res = await api.get("/auth/users");
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || { message: "Error al obtener usuarios" };
+  }
+};

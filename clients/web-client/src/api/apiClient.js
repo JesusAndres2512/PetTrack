@@ -2,9 +2,13 @@ import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_GATEWAY;
 
+// =============================
+// 🔧 Instancia Axios
+// =============================
 const apiClient = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true, // si usas cookies desde el Auth service
 });
 
 // =============================
@@ -37,119 +41,73 @@ apiClient.interceptors.response.use(
 // 🧩 AUTENTICACIÓN
 // =============================
 export const login = async (username, password) => {
-  try {
-    const { data } = await apiClient.post("/auth/login", { username, password });
-    if (data.access_token) localStorage.setItem("token", data.access_token);
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al iniciar sesión" };
-  }
+  const { data } = await apiClient.post("/auth/login", { username, password });
+  if (data.access_token) localStorage.setItem("token", data.access_token);
+  return data;
 };
 
 export const register = async ({ username, email, password, role }) => {
-  try {
-    const { data } = await apiClient.post("/auth/register", {
-      username,
-      email,
-      password,
-      role,
-    });
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al registrar usuario" };
-  }
+  const { data } = await apiClient.post("/auth/register", {
+    username,
+    email,
+    password,
+    role,
+  });
+  return data;
 };
 
 export const getProfile = async () => {
-  try {
-    const { data } = await apiClient.get("/auth/profile");
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al obtener perfil" };
-  }
+  const { data } = await apiClient.get("/auth/profile");
+  return data;
 };
 
 export const getUsers = async () => {
-  try {
-    const { data } = await apiClient.get("/auth/users");
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al obtener usuarios" };
-  }
+  const { data } = await apiClient.get("/auth/users");
+  return data;
 };
 
-// 🧑‍💼 Eliminar usuario (solo admin)
 export const deleteUser = async (userId) => {
-  try {
-    const { data } = await apiClient.delete(`/auth/users/${userId}`);
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al eliminar usuario" };
-  }
+  const { data } = await apiClient.delete(`/auth/users/${userId}`);
+  return data;
 };
 
-// ✏️ Actualizar usuario (solo admin)
 export const updateUser = async (userId, updatedData) => {
-  try {
-    const { data } = await apiClient.put(`/auth/users/${userId}`, updatedData);
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al actualizar usuario" };
-  }
+  const { data } = await apiClient.put(`/auth/users/${userId}`, updatedData);
+  return data;
 };
 
 // =============================
 // 🐶 MASCOTAS
 // =============================
 export const getPets = async () => {
-  try {
-    const { data } = await apiClient.get("/pets");
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al obtener mascotas" };
-  }
+  const { data } = await apiClient.get("/pets");
+  return data;
 };
 
 export const addPet = async (petData) => {
-  try {
-    const { data } = await apiClient.post("/pets", petData);
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al agregar mascota" };
-  }
+  const { data } = await apiClient.post("/pets", petData);
+  return data;
 };
 
 // =============================
 // 📅 CITAS
 // =============================
 export const getAppointments = async () => {
-  try {
-    const { data } = await apiClient.get("/appointments");
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al obtener citas" };
-  }
+  const { data } = await apiClient.get("/appointments");
+  return data;
 };
 
 export const addAppointment = async (appointmentData) => {
-  try {
-    const { data } = await apiClient.post("/appointments", appointmentData);
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al crear cita" };
-  }
+  const { data } = await apiClient.post("/appointments", appointmentData);
+  return data;
 };
 
 // =============================
 // 📊 DASHBOARD
 // =============================
 export const getDashboard = async () => {
-  try {
-    const { data } = await apiClient.get("/dashboard");
-    return data;
-  } catch (error) {
-    throw error.response?.data || { detail: "Error al obtener datos del dashboard" };
-  }
+  const { data } = await apiClient.get("/dashboard");
+  return data;
 };
 
 export default apiClient;
