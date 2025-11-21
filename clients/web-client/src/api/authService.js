@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // URL base del API Gateway
-const API_URL = import.meta.env.VITE_API_GATEWAY + "/auth";
+const API_URL = import.meta.env.VITE_API_GATEWAY + "/auth" || "https://api-gateway-apppettrack.azure-api.net";
 
 // Instancia de Axios para centralizar configuración
 const api = axios.create({
