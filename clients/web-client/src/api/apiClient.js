@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_GATEWAY;
+const API_BASE = "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net";
 
 // =============================
 // 🔧 Instancia Axios
