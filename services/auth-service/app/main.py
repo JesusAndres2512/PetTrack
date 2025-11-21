@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
@@ -16,21 +16,13 @@ app = FastAPI(title="Auth Service")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
-API_AUDIENCE = "https://api-gateway-apppettrack.azure-api.net/"
-API_ISSUER = "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/"
-
 # ===== JWT =====
 def create_access_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
-
-    to_encode.update({
-        "exp": expire,
-        "aud": API_AUDIENCE,
-        "iss": API_ISSUER
-    })
-
+    to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
@@ -39,8 +31,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             SECRET_KEY,
             algorithms=[ALGORITHM],
             audience="https://api-gateway-apppettrack.azure-api.net/",
-            issuer="https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
-            options={"verify_aud": False} 
+            issuer="https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/"
         )
 
         email = payload.get("sub")
@@ -59,7 +50,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=401, detail="Token inválido")
 
 
-# ===== Decorador de roles =====
+# ===== Roles =====
 def role_required(allowed_roles: List[str]):
     def wrapper(user: models.User = Depends(get_current_user)):
         if user.role not in allowed_roles:
@@ -72,7 +63,7 @@ def role_required(allowed_roles: List[str]):
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == user.email).first():
-        raise HTTPException(statusCode=400, detail="Email ya registrado")
+        raise HTTPException(status_code=400, detail="Email ya registrado")
 
     hashed_pw = pwd_context.hash(user.password)
 
@@ -86,7 +77,6 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-
     return new_user
 
 
@@ -101,7 +91,9 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     token = create_access_token(
         data={
             "sub": user.email,
-            "role": user.role
+            "role": user.role,
+            "iss": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
+            "aud": "https://api-gateway-apppettrack.azure-api.net/"
         },
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
@@ -121,25 +113,19 @@ def profile(user: models.User = Depends(get_current_user)):
     return user
 
 
-# ===== USERS LIST =====
+# ===== LIST USERS =====
 @app.get("/users", response_model=List[schemas.UserResponse])
-def list_users(current_user: models.User = Depends(role_required(["admin", "doctor"])),
-               db: Session = Depends(get_db)):
-
-    users = db.query(models.User).all()
-    return users
+def list_users(current_user: models.User = Depends(role_required(["admin", "doctor"])), db: Session = Depends(get_db)):
+    return db.query(models.User).all()
 
 
 # ===== DASHBOARD =====
 @app.get("/dashboard/{role}")
 def dashboard(role: str, current_user: models.User = Depends(get_current_user)):
-
     if role == "admin" and current_user.role != "admin":
         raise HTTPException(status_code=403)
-
     if role == "doctor" and current_user.role != "doctor":
         raise HTTPException(status_code=403)
-
     if role == "user" and current_user.role != "user":
         raise HTTPException(status_code=403)
 
@@ -148,30 +134,26 @@ def dashboard(role: str, current_user: models.User = Depends(get_current_user)):
 
 # ===== DELETE USER =====
 @app.delete("/users/{user_id}", status_code=204)
-def delete_user(user_id: int,
+def delete_user(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(role_required(["admin"]))):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "Usuario no encontrado")
+
+    db.delete(user)
+    db.commit()
+
+    return {"message": f"Usuario con ID {user_id} eliminado correctamente"}
+
+
+# ===== UPDATE USER =====
+@app.put("/users/{user_id}", response_model=schemas.UserResponse)
+def update_user(user_id: int, updated_data: schemas.UserUpdate,
                 db: Session = Depends(get_db),
                 current_user: models.User = Depends(role_required(["admin"]))):
 
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    db.delete(user)
-    db.commit()
-
-
-# ===== UPDATE USER =====
-@app.put("/users/{user_id}", response_model=schemas.UserResponse)
-def update_user(
-    user_id: int,
-    updated_data: schemas.UserUpdate,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(role_required(["admin"]))
-):
-
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(404, "Usuario no encontrado")
 
     if updated_data.username:
         user.username = updated_data.username
@@ -179,7 +161,7 @@ def update_user(
         user.email = updated_data.email
     if updated_data.role:
         if updated_data.role not in ["user", "doctor", "admin"]:
-            raise HTTPException(status_code=400, detail="Rol no válido")
+            raise HTTPException(400, "Rol no válido")
         user.role = updated_data.role
     if updated_data.password:
         user.hashed_password = pwd_context.hash(updated_data.password)
@@ -187,7 +169,3 @@ def update_user(
     db.commit()
     db.refresh(user)
     return user
-# ===== HEALTH CHECK =====
-@app.get("/health")
-def health():
-    return {"status": "ok"}

@@ -1,4 +1,3 @@
-// clients/web-client/src/api/apiClient.js
 import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_GATEWAY
@@ -8,10 +7,10 @@ const API_BASE = import.meta.env.VITE_API_GATEWAY
 const apiClient = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
-  withCredentials: false, // ⚠️ API Management NO usa cookies
+  withCredentials: false, // API Management NO usa cookies
 });
 
-// ===== Agregar Authorization =====
+// ===== JWT =====
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -50,10 +49,7 @@ export const getProfile = async () => {
   return data;
 };
 
-
-// =============================
-// 👥 USERS
-// =============================
+// ===== USERS =====
 export const getUsers = async () => {
   const { data } = await apiClient.get("/users");
   return data;
@@ -69,9 +65,7 @@ export const updateUser = async (userId, updatedData) => {
   return data;
 };
 
-// =============================
-// 🐶 PETS
-// =============================
+// ===== PETS =====
 export const getPets = async () => {
   const { data } = await apiClient.get("/pets");
   return data;
@@ -82,9 +76,7 @@ export const addPet = async (petData) => {
   return data;
 };
 
-// =============================
-// 📅 APPOINTMENTS
-// =============================
+// ===== APPOINTMENTS =====
 export const getAppointments = async () => {
   const { data } = await apiClient.get("/appointments");
   return data;
@@ -95,13 +87,10 @@ export const addAppointment = async (appointmentData) => {
   return data;
 };
 
-// =============================
-// 📊 DASHBOARD
-// =============================
+// ===== DASHBOARD =====
 export const getDashboard = async () => {
   const { data } = await apiClient.get("/dashboard");
   return data;
 };
 
-// =============================
 export default apiClient;
