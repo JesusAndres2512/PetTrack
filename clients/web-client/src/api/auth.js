@@ -1,7 +1,7 @@
 import { authClient } from "./apiClient";
 
 export const login = async ({ username, password }) => {
-  const { data } = await authClient.post("/auth/login", {
+  const { data } = await authClient.post("/login", {
     username,
     password,
   });
@@ -9,12 +9,12 @@ export const login = async ({ username, password }) => {
 };
 
 export const register = async (user) => {
-  const { data } = await authClient.post("/auth/register", user);
+  const { data } = await authClient.post("/register", user);
   return data;
 };
 
 export const getProfile = async (token) => {
-  const { data } = await authClient.get("/auth/profile", {
+  const { data } = await authClient.get("/profile", {
     headers: { Authorization: `Bearer ${token}` },
   });
   return data;

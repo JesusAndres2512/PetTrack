@@ -2,7 +2,7 @@
 import axios from "axios";
 
 // URL base del API Gateway
-const API_URL = "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net";
+const API_URL = import.meta.env.VITE_API_GATEWAY;
 
 // Instancia de Axios para centralizar configuración
 const api = axios.create({
