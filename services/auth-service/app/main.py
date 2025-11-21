@@ -5,10 +5,15 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import jwt
 from typing import List
+import json
+from fastapi.responses import JSONResponse
+from jwt.utils import base64url_encode
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 
 from . import models, schemas
 from .database import Base, engine, get_db
-from .config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from .config import PRIVATE_KEY, PUBLIC_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Auth Service")
@@ -16,19 +21,26 @@ app = FastAPI(title="Auth Service")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
-# ===== JWT =====
+# ==========================
+# 🔐 JWT (RSA256)
+# ==========================
 def create_access_token(data: dict, expires_delta: timedelta):
     to_encode = data.copy()
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+    return jwt.encode(
+        to_encode,
+        PRIVATE_KEY,
+        algorithm=ALGORITHM
+    )
 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(
             token,
-            SECRET_KEY,
+            PUBLIC_KEY,
             algorithms=[ALGORITHM],
             audience="https://api-gateway-apppettrack.azure-api.net/",
             issuer="https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/"
@@ -50,7 +62,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=401, detail="Token inválido")
 
 
-# ===== Roles =====
+# ==========================
+# 🧩 Roles
+# ==========================
 def role_required(allowed_roles: List[str]):
     def wrapper(user: models.User = Depends(get_current_user)):
         if user.role not in allowed_roles:
@@ -58,8 +72,9 @@ def role_required(allowed_roles: List[str]):
         return user
     return wrapper
 
-
-# ===== REGISTER =====
+# ==========================
+# 🔹 Register
+# ==========================
 @app.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.email == user.email).first():
@@ -80,7 +95,9 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-# ===== LOGIN =====
+# ==========================
+# 🔹 Login
+# ==========================
 @app.post("/login")
 def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == credentials.username).first()
@@ -106,33 +123,33 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
         "role": user.role
     }
 
-
-# ===== PROFILE =====
+# ==========================
+# 🔹 Profile
+# ==========================
 @app.get("/profile", response_model=schemas.UserResponse)
 def profile(user: models.User = Depends(get_current_user)):
     return user
 
-
-# ===== LIST USERS =====
+# ==========================
+# 🔹 Users
+# ==========================
 @app.get("/users", response_model=List[schemas.UserResponse])
 def list_users(current_user: models.User = Depends(role_required(["admin", "doctor"])), db: Session = Depends(get_db)):
     return db.query(models.User).all()
 
-
-# ===== DASHBOARD =====
+# ==========================
+# 🔹 Dashboard
+# ==========================
 @app.get("/dashboard/{role}")
 def dashboard(role: str, current_user: models.User = Depends(get_current_user)):
-    if role == "admin" and current_user.role != "admin":
-        raise HTTPException(status_code=403)
-    if role == "doctor" and current_user.role != "doctor":
-        raise HTTPException(status_code=403)
-    if role == "user" and current_user.role != "user":
+    if role != current_user.role:
         raise HTTPException(status_code=403)
 
     return {"message": f"Bienvenido al dashboard de {role}, {current_user.username}"}
 
-
-# ===== DELETE USER =====
+# ==========================
+# 🔹 Delete user
+# ==========================
 @app.delete("/users/{user_id}", status_code=204)
 def delete_user(user_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(role_required(["admin"]))):
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -141,11 +158,11 @@ def delete_user(user_id: int, db: Session = Depends(get_db), current_user: model
 
     db.delete(user)
     db.commit()
+    return {"message": f"Usuario con ID {user_id} eliminado"}
 
-    return {"message": f"Usuario con ID {user_id} eliminado correctamente"}
-
-
-# ===== UPDATE USER =====
+# ==========================
+# 🔹 Update user
+# ==========================
 @app.put("/users/{user_id}", response_model=schemas.UserResponse)
 def update_user(user_id: int, updated_data: schemas.UserUpdate,
                 db: Session = Depends(get_db),
@@ -160,8 +177,6 @@ def update_user(user_id: int, updated_data: schemas.UserUpdate,
     if updated_data.email:
         user.email = updated_data.email
     if updated_data.role:
-        if updated_data.role not in ["user", "doctor", "admin"]:
-            raise HTTPException(400, "Rol no válido")
         user.role = updated_data.role
     if updated_data.password:
         user.hashed_password = pwd_context.hash(updated_data.password)
@@ -169,3 +184,50 @@ def update_user(user_id: int, updated_data: schemas.UserUpdate,
     db.commit()
     db.refresh(user)
     return user
+
+# Convertir clave pública RSA → JWK
+def load_jwk():
+    public_key_obj = serialization.load_pem_public_key(
+        PUBLIC_KEY.encode(),
+        backend=default_backend()
+    )
+
+    numbers = public_key_obj.public_numbers()
+
+    n = base64url_encode(numbers.n.to_bytes((numbers.n.bit_length() + 7) // 8, 'big')).decode()
+    e = base64url_encode(numbers.e.to_bytes((numbers.e.bit_length() + 7) // 8, 'big')).decode()
+
+    return {
+        "keys": [
+            {
+                "kty": "RSA",
+                "use": "sig",
+                "alg": "RS256",
+                "kid": "auth-rsa-key",
+                "n": n,
+                "e": e
+            }
+        ]
+    }
+
+
+@app.get("/.well-known/jwks.json")
+def jwks():
+    return JSONResponse(load_jwk())
+
+
+@app.get("/.well-known/openid-configuration")
+def openid_config():
+    base = "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net"
+    return {
+        "issuer": base,
+        "jwks_uri": f"{base}/.well-known/jwks.json",
+        "authorization_endpoint": f"{base}/login",
+        "token_endpoint": f"{base}/login"
+    }
+
+# ==========================
+# 🔹 Health Check
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}

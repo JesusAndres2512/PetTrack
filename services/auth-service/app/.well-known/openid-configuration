@@ -1,0 +1,4 @@
+{
+  "issuer": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/",
+  "jwks_uri": "https://auth-service-apppettrack-caerbec2asefbwcd.canadacentral-01.azurewebsites.net/jwks"
+}
